@@ -9,5 +9,6 @@ spec:
     image: maven:3.6-slim
     securityContext:
       privileged: true
-
+    tty: true 
+    command: cat
 
