@@ -11,4 +11,10 @@ spec:
       privileged: true
     tty: true 
     command: ['cat']
+  - name: anypoint-cli
+    image: integrational/anypoint-cli:latest
+    securityContext:
+      privileged: true
+    tty: true 
+    command: ['cat']
 

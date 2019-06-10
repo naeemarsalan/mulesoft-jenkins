@@ -14,9 +14,13 @@ pipeline {
         container('jnlp'){
         script{
           echo "Checking out from branch "+"${branch}"
+          anypoint_environment=Test
           timeout(time: Integer.parseInt("$gitclone_timeout"), unit: 'SECONDS') {
             retry(3) {
               checkout([$class: 'GitSCM', branches: [[name: '*/'+"$branch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'bitbucket to jenkins', url: "$application_git_url"]]])
+              pom = readMavenPom file: 'pom.xml'
+              artifactName = readMavenPom().getArtifactId()
+              version = readMavenPom().getVersion()
             }
           }
         }
@@ -34,5 +38,20 @@ pipeline {
       }
     }
     }
+    stage('deploy to anypoint') {
+      steps{
+        container('anypoint-cli'){
+        script{
+          withCredentials([usernamePassword(credentialsId: 'anypointplatform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')])
+          {
+             dir('target')
+             {
+                sh 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr standalone-application deploy mulesoft-test-75c4d76d9f-r6kt8 '+"$artifactName"+' '+"$artifactName"+'-'+"$version"+'.zip'
+                }
+          }
+        }
+      } 
+  }
+}
   }
 }
