@@ -46,7 +46,7 @@ pipeline {
           {
              dir('target')
              {
-                sh 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr standalone-application deploy mulesoft-test-75c4d76d9f-r6kt8 '+"$artifactName"+' '+"$artifactName"+'-'+"$version"+'.jar'
+                sh 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr standalone-application deploy mulesoft-test-75c4d76d9f-r6kt8 '+"$artifactName"+' '+"$artifactName"+'-'+"$version"+'-mule-application.jar'
                 }
           }
         }
