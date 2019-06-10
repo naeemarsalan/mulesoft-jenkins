@@ -5,7 +5,7 @@ pipeline {
   agent {
     kubernetes {
       label 'mule'
-      yamlFile 'kubernetes.yaml'
+      yamlFile 'mule/kubernetes.yaml'
     }
   }
   stages {
