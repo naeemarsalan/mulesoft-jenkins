@@ -27,10 +27,9 @@ pipeline {
       steps{
         container('maven'){
         script{
-            configFileProvider([configFile(fileId: "maven_settings", variable: 'MAVEN_SETTINGS_XML')])
-          {
-            sh "mvn -s '$MAVEN_SETTINGS_XML' clean package -DskipTests -x"
-          }
+            
+            sh "mvn -s mule/settings.xml clean package -DskipTests -x"
+
         }
       }
     }
