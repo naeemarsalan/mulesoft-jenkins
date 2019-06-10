@@ -28,7 +28,7 @@ pipeline {
         container('maven'){
         script{
             sh 'pwd && ls -lsa && env'
-            sh "mvn clean package -DskipTests -x"
+            //sh "mvn clean package -DskipTests -x"
 
         }
       }
