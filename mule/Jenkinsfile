@@ -1,0 +1,39 @@
+def artifactName
+def version
+def anypoint_environment
+pipeline {
+  agent {
+    kubernetes {
+      label 'mule'
+      yamlFile 'kubernetes.yaml'
+    }
+  }
+  stages {
+    stage ('checkout SCM') {
+      steps{
+        container('jnlp'){
+        script{
+          echo "Checking out from branch "+"${branch}"
+          timeout(time: Integer.parseInt("$gitclone_timeout"), unit: 'SECONDS') {
+            retry(3) {
+              checkout([$class: 'GitSCM', branches: [[name: '*/'+"$branch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'bitbucket to jenkins', url: "$application_git_url"]]])
+            }
+          }
+        }
+        }
+      }
+    }
+    stage('build') {
+      steps{
+        container('maven'){
+        script{
+            configFileProvider([configFile(fileId: "settings_maven", variable: 'MAVEN_SETTINGS_XML')])
+          {
+            sh 'mvn -s $MAVEN_SETTINGS_XML clean package -DskipTests'
+          }
+        }
+      }
+    }
+    }
+  }
+}
