@@ -1,6 +1,5 @@
 def artifactName
 def version
-def anypoint_environment
 pipeline {
   agent {
     kubernetes {
@@ -14,7 +13,6 @@ pipeline {
         container('jnlp'){
         script{
           echo "Checking out from branch "+"${branch}"
-          anypoint_environment="Test"
           timeout(time: Integer.parseInt("$gitclone_timeout"), unit: 'SECONDS') {
             retry(3) {
               checkout([$class: 'GitSCM', branches: [[name: '*/'+"$branch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'bitbucket to jenkins', url: "$application_git_url"]]])
