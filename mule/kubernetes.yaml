@@ -12,7 +12,9 @@ spec:
     tty: true 
     command: ['cat']
   - name: anypoint-cli
-    image: integrational/anypoint-cli:latest
+    imagePullSecrets:
+      - name: nexus
+    image: docker.k8s.dev.ms3-inc.com/anypoint-cli/3
     securityContext:
       privileged: true
     tty: true 
