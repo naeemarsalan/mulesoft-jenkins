@@ -27,8 +27,8 @@ pipeline {
       steps{
         container('maven'){
         script{
-            
-            sh "mvn -s mule/settings.xml clean package -DskipTests -x"
+            sh 'pwd && ls -lsa && env'
+            sh "mvn clean package -DskipTests -x"
 
         }
       }
