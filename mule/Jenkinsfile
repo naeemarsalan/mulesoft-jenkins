@@ -25,6 +25,17 @@ pipeline {
         }
       }
     }
+    stage('Test') {
+      steps{
+        container('maven'){
+        script{
+	  configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test"
+         }
+        }
+      }
+    }
+    }
     stage('build') {
       steps{
         container('maven'){
