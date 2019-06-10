@@ -29,7 +29,7 @@ pipeline {
         script{
             configFileProvider([configFile(fileId: "maven_settings", variable: 'MAVEN_SETTINGS_XML')])
           {
-            sh "mvn -s '$MAVEN_SETTINGS_FILE' clean package -DskipTests"
+            sh "mvn -s '$MAVEN_SETTINGS_XML' clean package -DskipTests"
           }
         }
       }
