@@ -60,8 +60,8 @@ pipeline {
             type: 'jar']], 
             credentialsId: 'nexus', 
             groupId: "$groupName", 
-            nexusUrl: 'nexus.k8s.dev.ms3-inc.com', 
-            nexusVersion: 'nexus2', 
+            nexusUrl: 'https://nexus.k8s.dev.ms3-inc.com/repository/maven-snapshots/', 
+            nexusVersion: 'nexus3', 
             protocol: 'https', 
             repository: 'maven-snapshots', 
             version: "$version"
