@@ -19,6 +19,7 @@ pipeline {
               pom = readMavenPom file: 'pom.xml'
               artifactName = readMavenPom().getArtifactId()
               version = readMavenPom().getVersion()
+              groupName = readMavenPom().getGroupId()
             }
           }
         }
@@ -46,6 +47,27 @@ pipeline {
         }
       }
     }
+    }
+    stage('uploadToNexus') {
+      steps{
+        script{
+          dir('target')
+          {
+            nexusArtifactUploader artifacts: [[
+            artifactId: '$artifactName', 
+            classifier: '', 
+            file: '$artifactName-$version-mule-application.jar', 
+            type: 'jar']], 
+            credentialsId: 'nexus', 
+            groupId: '$groupName', 
+            nexusUrl: 'nexus.k8s.dev.ms3-inc.com', 
+            nexusVersion: 'nexus2', 
+            protocol: 'https', 
+            repository: 'maven-snapshots', 
+            version: '$version'
+          }
+        }
+      }
     }
     stage('deploy to anypoint') {
       steps{
