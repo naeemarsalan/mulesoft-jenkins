@@ -54,7 +54,7 @@ pipeline {
           dir('target')
           {
             nexusArtifactUploader artifacts: [[
-            artifactId: '$artifactName', 
+            artifactId: "$artifactName", 
             classifier: '', 
             file: "$artifactName-$version-mule-application.jar", 
             type: 'jar']], 
