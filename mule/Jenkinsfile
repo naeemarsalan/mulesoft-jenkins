@@ -50,6 +50,7 @@ pipeline {
     }
     stage('uploadToNexus') {
       steps{
+        container('jnlp'){
         script{
           dir('target')
           {
@@ -60,12 +61,13 @@ pipeline {
             type: 'jar']], 
             credentialsId: 'nexus', 
             groupId: "$groupName", 
-            nexusUrl: 'nexus.k8s.dev.ms3-inc.com', 
+            nexusUrl: "$nexus_url", 
             nexusVersion: 'nexus3', 
             protocol: 'https', 
             repository: 'maven-snapshots', 
             version: "$version"
           }
+        }
         }
       }
     }
