@@ -86,5 +86,25 @@ pipeline {
       } 
   }
 }
+    stage('deploy to anypoint') {
+      steps{
+        container('anypoint-cli'){
+        script{
+          withCredentials([usernamePassword(credentialsId: 'anypointplatform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')])
+          {
+            dir('target')
+            {
+                withEnv(['artifact='+"$artifactName", 'anypoint_env='+"$anypoint_environment"])
+                    {
+                      timeout(time: 90, unit: 'SECONDS') {
+                        sh 'sh validate.sh'
+                      }
+                    }
+                }
+          }
+            }
+        }
+    }
+  }
   }
 }
