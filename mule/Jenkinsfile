@@ -86,7 +86,7 @@ pipeline {
       } 
   }
 }
-    stage('deploy to anypoint') {
+    stage('validate') {
       steps{
         container('anypoint-cli'){
         script{
