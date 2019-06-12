@@ -92,7 +92,7 @@ pipeline {
         script{
           withCredentials([usernamePassword(credentialsId: 'anypointplatform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')])
           {
-            dir('target')
+            dir('mule')
             {
                 withEnv(['artifact='+"$artifactName", 'anypoint_env='+"$anypoint_environment"])
                     {
