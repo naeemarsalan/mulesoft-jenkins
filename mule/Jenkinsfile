@@ -95,9 +95,9 @@ pipeline {
             
                 withEnv(['artifact='+"$artifactName", 'anypoint_env='+"$anypoint_environment"])
                     {
-                    dir('mule')
-                      {
                       timeout(time: 90, unit: 'SECONDS') {
+                      dir('mule')
+                      {
                         sh 'sh validate.sh'
                       }
                     }
