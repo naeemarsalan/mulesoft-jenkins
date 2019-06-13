@@ -81,7 +81,7 @@ pipeline {
              {
                 //ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr cloudhub-application list')
                 def ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_environment} runtime-mgr standalone-application list -o json')
-                echo $ApplicationList
+                echo "${ApplicationList}"
                 if ("${ApplicationList}" =~ "${artifactName}")
                   sh 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr standalone-application modify '+"$server_name"+' '+"$artifactName"+' '+"$artifactName"+'-'+"$version"+'-mule-application.jar'
                 else
