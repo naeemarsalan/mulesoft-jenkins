@@ -83,7 +83,7 @@ pipeline {
                 def ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_environment} runtime-mgr standalone-application list -o json')
                 echo "${ApplicationList}"
                 if ("${ApplicationList}" =~ "${artifactName}")
-                  sh 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr standalone-application modify '+"$server_name"+' '+"$artifactName"+' '+"$artifactName"+'-'+"$version"+'-mule-application.jar'
+                  sh 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr standalone-application modify '+"$artifactName"+' '+"$artifactName"+'-'+"$version"+'-mule-application.jar'
                 else
                   sh 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr standalone-application deploy '+"$server_name"+' '+"$artifactName"+' '+"$artifactName"+'-'+"$version"+'-mule-application.jar'
                 }
