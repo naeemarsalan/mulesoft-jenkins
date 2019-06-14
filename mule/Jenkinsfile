@@ -59,12 +59,12 @@ pipeline {
             uniqueVersion: 'false',
             classifier: '', 
             file: "$artifactName-$version-mule-application.jar", 
-            type: 'jar']],
-            artifacts: [[
+            type: 'jar'],
+            [
             artifactId: "$artifactName", 
             uniqueVersion: 'false',
             classifier: '', 
-            file: "../pom.xml", 
+            file: "$../pom.xml", 
             type: 'pom']], 
             credentialsId: 'nexus', 
             groupId: "$groupName", 
