@@ -64,7 +64,7 @@ pipeline {
             artifactId: "$artifactName", 
             uniqueVersion: 'false',
             classifier: '', 
-            file: "$../pom.xml", 
+            file: "../pom.xml", 
             type: 'pom']], 
             credentialsId: 'nexus', 
             groupId: "$groupName", 
