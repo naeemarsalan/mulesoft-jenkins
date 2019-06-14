@@ -68,6 +68,19 @@ pipeline {
             repository: 'maven-snapshots', 
             version: "$version"
           }
+          nexusArtifactUploader artifacts: [[
+            artifactId: "$artifactName", 
+            uniqueVersion: 'false',
+            classifier: '', 
+            file: "pom.xml", 
+            type: 'pom']], 
+            credentialsId: 'nexus', 
+            groupId: "$groupName", 
+            nexusUrl: "$nexus_url", 
+            nexusVersion: 'nexus3', 
+            protocol: 'https', 
+            repository: 'maven-snapshots', 
+            version: "$version"
         }
         }
       }
