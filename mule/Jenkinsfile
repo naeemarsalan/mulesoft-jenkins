@@ -59,20 +59,12 @@ pipeline {
             uniqueVersion: 'false',
             classifier: '', 
             file: "$artifactName-$version-mule-application.jar", 
-            type: 'jar']], 
-            credentialsId: 'nexus', 
-            groupId: "$groupName", 
-            nexusUrl: "$nexus_url", 
-            nexusVersion: 'nexus3', 
-            protocol: 'https', 
-            repository: 'maven-snapshots', 
-            version: "$version"
-          }
-          nexusArtifactUploader artifacts: [[
+            type: 'jar']],
+            artifacts: [[
             artifactId: "$artifactName", 
             uniqueVersion: 'false',
             classifier: '', 
-            file: "pom.xml", 
+            file: "../pom.xml", 
             type: 'pom']], 
             credentialsId: 'nexus', 
             groupId: "$groupName", 
@@ -81,6 +73,7 @@ pipeline {
             protocol: 'https', 
             repository: 'maven-snapshots', 
             version: "$version"
+          }
         }
         }
       }
