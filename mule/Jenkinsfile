@@ -11,13 +11,17 @@ pipeline {
     stage ('checkout SCM') {
       steps{
         container('jnlp'){
-        script{
+	script{
           echo "Checking out from branch "+"${branch}"
+          timeout(time: Integer.parseInt("$gitclone_timeout"), unit: 'SECONDS') {
+            retry(3) {
               checkout([$class: 'GitSCM', branches: [[name: '*/'+"$branch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'bitbucket to jenkins', url: "$application_git_url"]]])
               pom = readMavenPom file: 'pom.xml'
               artifactName = readMavenPom().getArtifactId()
               version = readMavenPom().getVersion()
               groupName = readMavenPom().getGroupId()
+            }
+          }
         }
         }
       }
