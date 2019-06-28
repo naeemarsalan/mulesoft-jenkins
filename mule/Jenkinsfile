@@ -93,26 +93,7 @@ pipeline {
       } 
   }
 }
-    stage('validate') {
-      steps{
-        container('anypoint-cli'){
-        script{
-          withCredentials([usernamePassword(credentialsId: 'anypointplatform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')])
-          {
-            
-                withEnv(['artifact='+"$artifactName", 'anypoint_env='+"$anypoint_environment"])
-                    {
-                      timeout(time: 90, unit: 'SECONDS') {
-                      dir('mule')
-                      {
-                        sh 'bash validate.sh'
-                      }
-                    }
-                }
-          }
-            }
-        }
-    }
+ 
   }
   }
-}
+
