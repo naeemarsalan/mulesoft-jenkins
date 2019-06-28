@@ -31,7 +31,7 @@ pipeline {
         container('maven'){
         script{
 	  configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean package -Denv=local -Dapp.key=WestVirginia1234"
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=local -Dapp.key=WestVirginia1234"
          }
         }
       }
