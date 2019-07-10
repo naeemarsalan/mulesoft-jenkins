@@ -30,8 +30,10 @@ pipeline {
       steps{
         container('maven'){
         script{
-	  configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=local -Dapp.key=WestVirginia1234"
+          configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
+            withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${devenv} -Dapp.key=${appkey}"
+            }
          }
         }
       }
@@ -50,23 +52,13 @@ pipeline {
     }
     stage('uploadToNexus') {
       steps{
-        container('jnlp'){
+        container('maven'){
         script{
           dir('target')
           {
-            nexusArtifactUploader artifacts: [[
-            artifactId: "$artifactName", 
-            uniqueVersion: 'false',
-            classifier: '', 
-            file: "$artifactName-$version-mule-application.jar", 
-            type: 'jar']], 
-            credentialsId: 'nexus', 
-            groupId: "$groupName", 
-            nexusUrl: "$nexus_url", 
-            nexusVersion: 'nexus3', 
-            protocol: 'https', 
-            repository: 'maven-snapshots', 
-            version: "$version"
+            configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
+            sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=$groupName -DartifactId=$artifactName -Dversion=$version -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=https://maven.ms3-inc.com/repository/maven-snapshots/ -Dfile=$artifactName-$version-mule-application.jar -DuniqueVersion=false"
+            }
           }
         }
         }
