@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   labels:
-    some-label: node
+    some-label: angular
   namespace: jenkins
 spec:
   containers:
