@@ -18,4 +18,5 @@ spec:
       privileged: true
     tty: true 
     command: ['cat']
-
+  imagePullSecrets:
+    - name: nexus
