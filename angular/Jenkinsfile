@@ -1,0 +1,35 @@
+def artifactName
+def version
+pipeline {
+  agent {
+    kubernetes {
+      label 'node'
+    }
+  }
+  stages {
+    stage ('checkout SCM') {
+      steps{
+        container('jnlp'){
+          script{
+            echo "Checking out from branch "+"${branch}"
+            timeout(time: Integer.parseInt("$gitclone_timeout"), unit: 'SECONDS') {
+              retry(3) {
+                checkout([$class: 'GitSCM', branches: [[name: '*/'+"$branch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'bitbucket to jenkins', url: "$application_git_url"]]])
+              }
+            }
+          }
+        }
+      }
+    }
+    stage('Init') {
+      steps{
+        container('node'){
+         sh '''#!/bin/bash
+           npm install -g @angular/cli@6.0.8;
+           npm install
+         '''
+        }
+      }
+    }
+  }
+}
