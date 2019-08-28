@@ -29,8 +29,8 @@ pipeline {
            npm install -g @angular/cli@7.0.6;
            pwd;
            ls -all;
-           ls -all angular-ui-main-page;
            ng build;
+           ls -all;
          '''
         }
       }
