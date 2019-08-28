@@ -25,7 +25,7 @@ pipeline {
     stage('Build') {
       steps{
         container('node'){
-         sh "npm install
+         sh "npm install"
          sh "ng build"
          sh "ls -all"
         }
