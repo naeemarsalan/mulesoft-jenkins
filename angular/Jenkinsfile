@@ -27,7 +27,10 @@ pipeline {
         container('node'){
          sh '''#!/bin/bash
            npm install -g @angular/cli@6.0.8;
-           ng build
+           pwd;
+           ls -all;
+           ls -all angular-ui-main-page;
+           ng build;
          '''
         }
       }
