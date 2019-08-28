@@ -26,7 +26,7 @@ pipeline {
       steps{
         container('node'){
          sh '''#!/bin/bash
-           npm install -g @angular/cli@6.0.8;
+           npm install -g @angular/cli@7.0.6;
            pwd;
            ls -all;
            ls -all angular-ui-main-page;
