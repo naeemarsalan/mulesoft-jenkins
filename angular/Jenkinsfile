@@ -8,7 +8,7 @@ pipeline {
     }
   }
   stages {
-    stage ('checkout SCM') {
+    stage ('Checkout SCM') {
       steps{
         container('jnlp'){
           script{
@@ -22,12 +22,12 @@ pipeline {
         }
       }
     }
-    stage('Init') {
+    stage('Build') {
       steps{
         container('node'){
          sh '''#!/bin/bash
            npm install -g @angular/cli@6.0.8;
-           npm install
+           ng build
          '''
         }
       }
