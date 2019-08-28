@@ -26,6 +26,7 @@ pipeline {
       steps{
         container('node'){
          sh "npm install"
+         sh "npm install -g @angular/cli@7.0.6"
          sh "ng build"
          sh "ls -all"
         }
