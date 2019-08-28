@@ -27,7 +27,8 @@ pipeline {
         container('node'){
          sh '''#!/bin/bash
            npm install -g @angular/cli@7.0.6;
-           pwd;
+           npm install --save-dev @angular-devkit/build-angular;
+           npm update;
            ls -all;
            ng build;
            ls -all;
