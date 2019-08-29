@@ -35,7 +35,14 @@ pipeline {
     stage('Deploy') {
       steps{
         container('awscli'){
-         sh "ls -all"
+          script{
+            withCredentials([usernamePassword(credentialsId: 's3.writer.iotsandbox', passwordVariable: 'aws_secret_access_key', usernameVariable: 'aws_access_key_id')]){
+              dir('target'){
+                echo "${aws_access_key_id}"
+                sh "ls -all"
+              }
+            }
+          }
         }
       }
     }
