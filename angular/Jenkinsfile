@@ -38,8 +38,9 @@ pipeline {
           script{
             withCredentials([usernamePassword(credentialsId: 's3.writer.iotsandbox', passwordVariable: 'aws_secret_access_key', usernameVariable: 'aws_access_key_id')]){
               dir('target'){
-                echo "${aws_access_key_id}"
-                sh "ls -all"
+                withEnv(["AWS_ACCESS_KEY_ID=${aws_access_key_id}"]) {
+                  sh "env"
+                }
               }
             }
           }
