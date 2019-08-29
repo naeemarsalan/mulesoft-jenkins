@@ -36,11 +36,10 @@ pipeline {
       steps{
         container('awscli'){
           script{
-            withCredentials([usernamePassword(credentialsId: 's3.writer.iotsandbox', passwordVariable: 'aws_secret_access_key', usernameVariable: 'aws_access_key_id')]){
+            withCredentials([usernamePassword(credentialsId: 's3.writer.iotsandbox', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]){
               dir('target'){
-                withEnv(["AWS_ACCESS_KEY_ID=${aws_access_key_id}"]) {
-                  sh "env"
-                }
+                sh "env"
+                sh "aws s3 sync --dryrun --delete --region us-east-1 . s3://${s3_bucket}"
               }
             }
           }
