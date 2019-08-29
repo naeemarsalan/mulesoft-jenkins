@@ -37,9 +37,7 @@ pipeline {
         container('awscli'){
           script{
             withCredentials([usernamePassword(credentialsId: 's3.writer.iotsandbox', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]){
-              dir('target'){
-                sh "aws s3 sync --delete --region us-east-1 . s3://${s3_bucket}/"
-              }
+              sh "aws s3 sync --delete --region us-east-1 . s3://${s3_bucket}/"
             }
           }
         }
