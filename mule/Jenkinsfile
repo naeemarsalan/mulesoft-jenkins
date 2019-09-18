@@ -35,6 +35,14 @@ pipeline {
                   sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${devenv} -Dapp.key=${appkey}"
             }
          }
+         publishHTML (target: [
+            allowMissing: false,
+            alwaysLinkToLastBuild: false,
+            keepAll: true,
+            reportDir: 'target\munit-reports\coverage',
+            reportFiles: 'summary.html',
+            reportName: "Coverage Report"
+            ])
         }
       }
     }
