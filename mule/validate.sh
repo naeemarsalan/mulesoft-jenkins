@@ -2,6 +2,7 @@
 ApplicationList=$(anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=$anypoint_env runtime-mgr standalone-application list -o json)
 echo $ApplicationList
 echo $server_name
+echo $server_name
 if [[ $ApplicationList =~ $artifact ]];
 then
 {
