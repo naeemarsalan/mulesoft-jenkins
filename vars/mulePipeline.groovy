@@ -6,7 +6,7 @@ def call(Map pipelineParams) {
     stages {
       stage('Test') {
         steps {
-          sh 'ok'
+          sh 'echo ok'
         }
       }
     }
