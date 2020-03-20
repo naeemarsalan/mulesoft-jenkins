@@ -2,12 +2,7 @@
 
 def call(Map pipelineParams) {
   pipeline {
-    agent {
-      kubernetes {
-        label 'mule'
-        yaml "kubernetes.yaml"
-      }
-    }
+    agent any
     stages {
       stage('Test') {
         steps {
