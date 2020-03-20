@@ -5,13 +5,13 @@ def call(Map pipelineParams) {
     agent {
       kubernetes {
         label 'mule'
-        yamlFile "${get_resource_dir()}mule/kubernetes.yaml"
+        yaml "kubernetes.yaml"
       }
     }
     stages {
       stage('Test') {
         steps {
-          sh 'echo ok'
+          sh 'pwd'
         }
       }
     }
