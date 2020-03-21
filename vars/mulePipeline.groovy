@@ -8,18 +8,15 @@ def call(Map pipelineParams) {
         yaml libraryResource('kubernetes.yaml')
       }
     }
+
     stages {
       stage('Test') {
         steps {
           container('maven') {
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-                withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
-                  if (Boolean.parseBoolean(env.env_override)) {
-                    sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${env_var} -Dapp.key=${appkey}"
-                  } else {
-                    sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${devenv} -Dapp.key=${appkey}"
-                  }
+                  withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'appenv')]) {
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${maven_env} -Dapp.key=${appkey}"
                   publishHTML (target: [
                     allowMissing: false,
                     alwaysLinkToLastBuild: false,
@@ -35,5 +32,7 @@ def call(Map pipelineParams) {
         }
       }
     }
+
+
   }
 }
