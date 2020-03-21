@@ -32,8 +32,48 @@ def call(Map pipelineParams) {
           }
         }
       }
+
+      stage('Build') {
+        when { environment name: 'GIT_BRANCH', value: 'origin/develop' }
+        steps {
+          container('maven') {
+            script {
+              configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
+                sh "mvn -s '$MAVEN_SETTINGS_FILE' clean package -DskipTests"
+              }
+            }
+          }
+        }
+      }
+
+      stage('Upload Artifact') {
+        when { environment name: 'GIT_BRANCH', value: 'origin/develop' }
+        steps {
+          container('maven') {
+            script {
+              configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
+                // populate pom variables
+                pom = readMavenPom file: 'pom.xml'
+                packaging = readMavenPom().getPackaging()
+                artifactName = readMavenPom().getArtifactId()
+                version = readMavenPom().getVersion()
+                groupName = readMavenPom().getGroupId()
+                // set global env vars
+                env.packaging = readMavenPom().getPackaging()
+                env.artifactName = readMavenPom().getArtifactId()
+                env.version = readMavenPom().getVersion()
+                env.groupName = readMavenPom().getGroupId()
+
+                dir('target') {
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=https://maven.ms3-inc.com/repository/maven-snapshots/ -Dfile=${artifactName}-${version}-${packaging}.jar -DuniqueVersion=false -Dclassifier=${packaging}"
+                }
+              }
+            }
+          }
+        }
+      }
+
+
     }
-
-
   }
 }
