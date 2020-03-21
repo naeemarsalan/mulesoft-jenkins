@@ -13,7 +13,6 @@ def call(Map pipelineParams) {
       stage('Test') {
         steps {
           container('maven') {
-            sh "echo ${BRANCH_NAME}"
             sh 'printenv'
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
