@@ -11,7 +11,7 @@ def call(Map pipelineParams) {
     }
 
     stages {
-      stage('Naming Convention') {
+      stage('Linter') {
         steps {
           container('maven') {
             script {
@@ -59,7 +59,7 @@ def call(Map pipelineParams) {
         }
       }
 
-      stage('Upload Artifact') {
+      stage('Upload to Nexus') {
         when { environment name: 'GIT_BRANCH', value: 'origin/develop' }
         steps {
           container('maven') {
