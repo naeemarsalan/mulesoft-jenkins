@@ -88,6 +88,8 @@ else
 fi
 
 # Check repo name is the same as app name
+echo "GIT_URL =  $GIT_URL"
+env
 if [ -e "$GIT_URL" ]; then
     repo_name=$(basename $GIT_URL |cut -f 1 -d .)
 fi
