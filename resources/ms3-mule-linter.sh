@@ -90,11 +90,19 @@ fi
 # Check repo name is the same as app name
 if [ -e "$GIT_URL" ]; then
     repo_name=$(basename $GIT_URL |cut -f 1 -d .)
-    if [ "$app_name" != "$artifact" ]; then
-        rc 2 "$repo_name should coincide with the app name"
-    else
-        rc 1 "$repo_name repository name check passed"
-    fi
+fi
+
+if [ -e "$repo_name" ] && [[ "$app_name" != "$repo_name" ]]; then
+    rc 2 "Git repo $repo_name should match the app name"
+else
+    rc 0 "Git $repo_name repository name check passed"
+fi
+
+# Check Jenkins job name
+if [ -e "$JOB_BASE_NAME"] && [[ "$repo_name" =~ "$JOB_BASE_NAME" ]]; then
+    rc 2 "Jenkins $JOB_BASE_NAME should include repository name"
+else
+    rc 0 "Jenkins job $JOB_BASE_NAME matches git repo name"
 fi
 
 # Check artifactId
@@ -134,9 +142,9 @@ fi
 # Check listener name
 listener="/api/$(echo $app_name| sed 's/-api//')"
 if [ -z "$(grep listener src/main/mule/*.xml| grep $listener)" ]; then
-    rc 2 "$listener not found"
+    rc 2 "Listener $listener not found"
 else
-    rc 0 "$listener found"
+    rc 0 "Listener $listener is in place"
 fi
 
 
