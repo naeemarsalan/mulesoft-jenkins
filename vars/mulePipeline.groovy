@@ -70,6 +70,13 @@ def call(Map pipelineParams) {
                 artifactName = readMavenPom().getArtifactId()
                 version = readMavenPom().getVersion()
                 groupName = readMavenPom().getGroupId()
+
+                // global env vars
+                env.packaging = readMavenPom().getPackaging()
+                env.artifactName = readMavenPom().getArtifactId()
+                env.version = readMavenPom().getVersion()
+                env.groupName = readMavenPom().getGroupId()
+
                 dir('target') {
                   sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=https://maven.ms3-inc.com/repository/maven-snapshots/ -Dfile=${artifactName}-${version}-${packaging}.jar -DuniqueVersion=false -Dclassifier=${packaging}"
                 }
