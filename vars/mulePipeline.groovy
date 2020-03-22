@@ -1,7 +1,9 @@
 // This pipeline requires no parameters as input
 
 
+def ms3-mule-linter = libraryResource 'ms3-mule-linter.sh'
 def call(Map pipelineParams) {
+
   pipeline {
     agent {
       kubernetes {
@@ -13,11 +15,8 @@ def call(Map pipelineParams) {
       stage('Naming Convention') {
         steps {
           container('maven') {
-            script {
-              def ms3-mule-linter = libraryResource 'ms3-mule-linter.sh'
-              writeFile file: 'ms3-mule-linter.sh', text: ms3-mule-linter
-              sh "bash ms3-mule-linter.sh"
-            }
+            writeFile file: 'ms3-mule-linter.sh', text: ms3-mule-linter
+            sh "bash ms3-mule-linter.sh"
           }
         }
       }
