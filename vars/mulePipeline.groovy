@@ -86,6 +86,25 @@ def call(Map pipelineParams) {
         }
       }
 
+      stage('Deploy to Anypoint') {
+        when { environment name: 'GIT_BRANCH', value: 'origin/develop' }
+        steps {
+          when { environment name: 'packaging', value: 'mule-application' }
+          container('anypoint-cli') {
+            script {
+              withCredentials([usernamePassword(credentialsId: 'anypoint-platform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')]) {
+                dir('target') {
+                  ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application list -f Name --limit 1000')
+                  if (ApplicationList = artifactName)
+                    sh "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application modify ${anypoint_server} ${artifactName}-${version}-${packaging}.jar"
+                  else
+                    sh "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application deploy ${anypoint_server} ${artifactName}-${version-${packaging}.jar"
+                }
+              }
+            }
+          }
+        }
+      }
 
     }
   }
