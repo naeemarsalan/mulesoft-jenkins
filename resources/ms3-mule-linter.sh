@@ -88,8 +88,11 @@ else
 fi
 
 # Check repo name is the same as app name
+echo "$GIT_URL"
 if [ -e "$GIT_URL" ]; then
+    echo "$GIT_URL"
     repo_name=$(basename $GIT_URL |sed "s/.git//")
+    echo "$repo_name"
 fi
 
 if [[ "$app_name" != "$repo_name" ]]; then
