@@ -88,11 +88,8 @@ else
 fi
 
 # Check repo name is the same as app name
-echo "$GIT_URL"
 if [ ! -z "$GIT_URL" ]; then
-    echo "$GIT_URL"
     repo_name=$(basename $GIT_URL |sed "s/.git//")
-    echo "$repo_name"
 fi
 
 if [[ "$app_name" != "$repo_name" ]]; then
@@ -102,7 +99,7 @@ else
 fi
 
 # Check Jenkins job name
-if [ -e "$JOB_BASE_NAME" ] && [[ "$repo_name" =~ "$JOB_BASE_NAME" ]]; then
+if [ ! -z "$JOB_BASE_NAME" ] && [[ "$repo_name" =~ "$JOB_BASE_NAME" ]]; then
     rc 2 "Jenkins $JOB_BASE_NAME should include repository name"
 else
     rc 0 "Jenkins job $JOB_BASE_NAME matches git repo name"
