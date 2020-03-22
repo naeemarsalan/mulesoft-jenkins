@@ -92,7 +92,7 @@ if [ -e "$GIT_URL" ]; then
     repo_name=$(basename $GIT_URL |cut -f 1 -d .)
 fi
 
-if [ -e "$repo_name" ] && [[ "$app_name" != "$repo_name" ]]; then
+if [[ "$app_name" != "$repo_name" ]]; then
     rc 2 "Git repo $repo_name should match the app name"
 else
     rc 0 "Git $repo_name repository name check passed"

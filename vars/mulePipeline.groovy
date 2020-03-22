@@ -26,7 +26,6 @@ def call(Map pipelineParams) {
       stage('Test') {
         steps {
           container('maven') {
-            sh 'printenv'
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                   withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'appenv')]) {
@@ -71,12 +70,6 @@ def call(Map pipelineParams) {
                 artifactName = readMavenPom().getArtifactId()
                 version = readMavenPom().getVersion()
                 groupName = readMavenPom().getGroupId()
-                // set global env vars
-                env.packaging = readMavenPom().getPackaging()
-                env.artifactName = readMavenPom().getArtifactId()
-                env.version = readMavenPom().getVersion()
-                env.groupName = readMavenPom().getGroupId()
-
                 dir('target') {
                   sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=https://maven.ms3-inc.com/repository/maven-snapshots/ -Dfile=${artifactName}-${version}-${packaging}.jar -DuniqueVersion=false -Dclassifier=${packaging}"
                 }
@@ -96,7 +89,7 @@ def call(Map pipelineParams) {
             script {
               withCredentials([usernamePassword(credentialsId: 'anypoint-platform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')]) {
                 dir('target') {
-                  ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application list -f Name --limit 1000')
+                  ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${env.anypoint_env} runtime-mgr standalone-application list -f Name --limit 1000')
                   if ("${ApplicationList}" =~ "${artifactName}")
                     sh "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application modify ${anypoint_server} ${artifactName}-${version}-${packaging}.jar"
                   else
