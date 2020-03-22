@@ -14,9 +14,11 @@ def call(Map pipelineParams) {
       stage('Naming Convention') {
         steps {
           container('maven') {
-            def scriptContent = libraryResource "ms3-mule-linter.sh"
-            writeFile file: 'ms3-mule-linter.sh', text: scriptContent
-            sh "bash ms3-mule-linter.sh"
+            script {
+              def scriptContent = libraryResource "ms3-mule-linter.sh"
+              writeFile file: 'ms3-mule-linter.sh', text: scriptContent
+              sh "bash ms3-mule-linter.sh"
+            }
           }
         }
       }
