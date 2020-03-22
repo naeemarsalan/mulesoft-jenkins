@@ -99,7 +99,6 @@ def call(Map pipelineParams) {
                     sh "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application modify ${anypoint_server} ${artifactName}-${version}-${packaging}.jar"
                   else
                     sh "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application deploy ${anypoint_server} ${artifactName}-${version}-${packaging}.jar"
-                  }
                 }
               }
             }
