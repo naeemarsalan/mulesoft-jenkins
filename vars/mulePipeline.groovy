@@ -87,9 +87,11 @@ def call(Map pipelineParams) {
       }
 
       stage('Deploy to Anypoint') {
-        when { environment name: 'GIT_BRANCH', value: 'origin/develop' }
+        when {
+            environment name: 'GIT_BRANCH', value: 'origin/develop'
+            environment name: 'packaging', value: 'mule-application'
+        }
         steps {
-          when { environment name: 'packaging', value: 'mule-application' }
           container('anypoint-cli') {
             script {
               withCredentials([usernamePassword(credentialsId: 'anypoint-platform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')]) {
