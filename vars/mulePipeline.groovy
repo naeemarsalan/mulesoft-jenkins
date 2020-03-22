@@ -98,7 +98,7 @@ def call(Map pipelineParams) {
                 dir('target') {
                   ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application list -f Name --limit 1000')
                   if ("${ApplicationList}" =~ "${artifactName}")
-                    sh "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application modify ${anypoint_server} ${artifactName}-${version}-${packaging}.jar"
+                    sh "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application modify ${artifactName}-${version}-${packaging}.jar"
                   else
                     sh "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application deploy ${anypoint_server} ${artifactName}-${version}-${packaging}.jar"
                 }
