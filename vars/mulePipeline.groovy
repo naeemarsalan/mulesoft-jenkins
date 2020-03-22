@@ -96,7 +96,7 @@ def call(Map pipelineParams) {
             script {
               withCredentials([usernamePassword(credentialsId: 'anypoint-platform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')]) {
                 dir('target') {
-                  ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${env.anypoint_env} runtime-mgr standalone-application list -f Name --limit 1000')
+                  ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application list -f Name --limit 1000')
                   if ("${ApplicationList}" =~ "${artifactName}")
                     sh "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application modify ${anypoint_server} ${artifactName}-${version}-${packaging}.jar"
                   else
