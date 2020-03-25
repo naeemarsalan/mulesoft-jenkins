@@ -11,7 +11,9 @@ def call(Map pipelineParams) {
     }
 
     stages {
+
       stage('Linter') {
+        when { expression { return readFile('pom.xml').contains('mule-application') } }
         steps {
           container('maven') {
             script {
@@ -24,6 +26,7 @@ def call(Map pipelineParams) {
       }
 
       stage('Test') {
+        when { expression { return readFile('pom.xml').contains('mule-application') } }
         steps {
           container('maven') {
             script {

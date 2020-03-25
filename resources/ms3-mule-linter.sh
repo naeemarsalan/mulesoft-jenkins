@@ -18,7 +18,7 @@ function rc {
 
 # Make sure README.md is in place
 if [ ! -e "README.md" ]; then
-    rc 2 'README.md file found'
+    rc 2 'README.md file not found'
 else
     rc 0 'README.md is in place'
 
@@ -128,10 +128,13 @@ else
 fi
 
 # Check log4j2 application name
-if [ -z "$(grep fileName src/main/resources/log4j2.xml |grep $app_name)" ]; then
-    rc 2 "log4j2 fileName should coincide with the application name"
-else
-    rc 0 "log4j2 log name check passed"
+if [ -e src/main/resources/log4j2.xml ]; then
+    log_check="$(grep fileName src/main/resources/log4j2.xml |grep $app_name)"
+    if [ -z "$log_check" ]; then
+        rc 2 "log4j2 fileName should coincide with the application name"
+    else
+        rc 0 "log4j2 log name check passed"
+    fi
 fi
 
 # Check flowfilename
