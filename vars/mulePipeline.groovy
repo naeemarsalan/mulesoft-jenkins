@@ -70,7 +70,6 @@ def call(Map pipelineParams) {
       stage('Upload to Nexus') {
         when {
           expression { GIT_BRANCH ==~ /(master|develop)/ }
-          }
         }
         steps {
           container('maven') {
