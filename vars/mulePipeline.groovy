@@ -49,7 +49,13 @@ def call(Map pipelineParams) {
       }
 
       stage('Build') {
-        when { environment name: 'GIT_BRANCH', value: 'origin/develop' }
+        when {
+          anyOf {
+            environment name: 'GIT_BRANCH', value: 'origin/master'
+            environment name: 'GIT_BRANCH', value: 'origin/develop'
+            environment name: 'GIT_BRANCH', value: 'origin/Mule4-develop'
+          }
+        }
         steps {
           container('maven') {
             script {
@@ -62,7 +68,13 @@ def call(Map pipelineParams) {
       }
 
       stage('Upload to Nexus') {
-        when { environment name: 'GIT_BRANCH', value: 'origin/develop' }
+        when {
+          anyOf {
+            environment name: 'GIT_BRANCH', value: 'origin/master'
+            environment name: 'GIT_BRANCH', value: 'origin/develop'
+            environment name: 'GIT_BRANCH', value: 'origin/Mule4-develop'
+          }
+        }
         steps {
           container('maven') {
             script {
@@ -91,9 +103,16 @@ def call(Map pipelineParams) {
 
       stage('Deploy to Anypoint') {
         when {
+          anyOf {
+            environment name: 'GIT_BRANCH', value: 'origin/master'
             environment name: 'GIT_BRANCH', value: 'origin/develop'
-            environment name: 'packaging', value: 'mule-application'
+            environment name: 'GIT_BRANCH', value: 'origin/Mule4-develop'
+            not {
+              environment name: 'packaging', value: 'mule-domain'
+            }
+          }
         }
+
         steps {
           container('anypoint-cli') {
             script {
