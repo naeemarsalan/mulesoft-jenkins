@@ -69,7 +69,7 @@ def call(Map pipelineParams) {
 
       stage('Upload to Nexus') {
         when {
-          expression { GIT_BRANCH ==~ /(master|develop)/ }
+          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
         }
         steps {
           container('maven') {
@@ -99,7 +99,7 @@ def call(Map pipelineParams) {
 
       stage('Deploy to Anypoint') {
         when {
-          expression { GIT_BRANCH ==~ /(master|develop)/ }
+          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
           expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
         }
 
