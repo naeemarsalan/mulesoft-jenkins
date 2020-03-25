@@ -13,7 +13,9 @@ def call(Map pipelineParams) {
     stages {
 
       stage('Linter') {
-        when { expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') } }
+        when {
+          expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
+        }
         steps {
           container('maven') {
             script {
@@ -50,10 +52,7 @@ def call(Map pipelineParams) {
 
       stage('Build') {
         when {
-          anyOf {
-            environment name: 'GIT_BRANCH', value: 'origin/master'
-            environment name: 'GIT_BRANCH', value: 'origin/develop'
-            environment name: 'GIT_BRANCH', value: 'origin/Mule4-develop'
+          expression { GIT_BRANCH ==~ /(master|develop)/ }
           }
         }
         steps {
@@ -69,10 +68,7 @@ def call(Map pipelineParams) {
 
       stage('Upload to Nexus') {
         when {
-          anyOf {
-            environment name: 'GIT_BRANCH', value: 'origin/master'
-            environment name: 'GIT_BRANCH', value: 'origin/develop'
-            environment name: 'GIT_BRANCH', value: 'origin/Mule4-develop'
+          expression { GIT_BRANCH ==~ /(master|develop)/ }
           }
         }
         steps {
@@ -103,14 +99,8 @@ def call(Map pipelineParams) {
 
       stage('Deploy to Anypoint') {
         when {
-          anyOf {
-            environment name: 'GIT_BRANCH', value: 'origin/master'
-            environment name: 'GIT_BRANCH', value: 'origin/develop'
-            environment name: 'GIT_BRANCH', value: 'origin/Mule4-develop'
-            not {
-              environment name: 'packaging', value: 'mule-domain'
-            }
-          }
+          expression { GIT_BRANCH ==~ /(master|develop)/ }
+          expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
         }
 
         steps {
