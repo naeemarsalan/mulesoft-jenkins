@@ -28,7 +28,9 @@ def call(Map pipelineParams) {
       }
 
       stage('Test') {
-        when { expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') } }
+        when {
+          expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
+        }
         steps {
           container('maven') {
             script {
@@ -53,7 +55,6 @@ def call(Map pipelineParams) {
       stage('Build') {
         when {
           expression { GIT_BRANCH ==~ /(master|develop)/ }
-          }
         }
         steps {
           container('maven') {
