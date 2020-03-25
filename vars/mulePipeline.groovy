@@ -54,7 +54,7 @@ def call(Map pipelineParams) {
 
       stage('Build') {
         when {
-          expression { GIT_BRANCH ==~ /(master|develop)/ }
+          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
         }
         steps {
           container('maven') {
