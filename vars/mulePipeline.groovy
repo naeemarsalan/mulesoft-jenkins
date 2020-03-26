@@ -35,17 +35,17 @@ def call(Map pipelineParams) {
           container('maven') {
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-                  withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'appenv')]) {
+                withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey')]) {
                   sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${maven_env} -Dapp.key=${appkey}"
-                  publishHTML (target: [
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: false,
-                    keepAll: true,
-                    reportDir: 'target/site/munit/coverage',
-                    reportFiles: 'summary.html',
-                    reportName: "Coverage Report"
-                  ])
                 }
+                publishHTML (target: [
+                  allowMissing: false,
+                  alwaysLinkToLastBuild: false,
+                  keepAll: true,
+                  reportDir: 'target/site/munit/coverage',
+                  reportFiles: 'summary.html',
+                  reportName: "Coverage Report"
+                ])
               }
             }
           }
