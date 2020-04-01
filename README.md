@@ -1,29 +1,39 @@
-# README #
+# Jenkins DevOps #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+This repository contains Jenkins Pipelines, Terraform scripts, Kubernetes .yaml resources and other handy resources.
 
-### What is this repository for? ###
+### MuleSoft Pipeline v3 ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* It is build around Jenkins Shared Library
+* Uses declarative syntax
+* Supports Bitbucket Webhooks
+* Has a Linter stage to ensure code quality
+* Support PullRequests triggers
+* directories: resources, var, src
+* [Documentation](https://bookstack.kube.cloudapps.ms3-inc.com/books/jenkins/page/mulesoft-internal-project-pipeline)
 
-### How do I get set up? ###
+### MuleSoft Pipeline v2 ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+* Common pipeline for MuleSoft API's
+* Left here for backward compatibility
+* Uses Poll SCM trigger
+* Desinged for k8s cluster
+* directory: mule
 
-### Contribution guidelines ###
+### Angular Pipeline v2 ###
 
-* Writing tests
-* Code review
-* Other guidelines
+* Common pipeline for Angular SPA
+* Left here for backward compatibility
+* Uses Poll SCM trigger
+* directory: angular
+
+
+### Best practices ###
+
+* [IaC](https://en.wikipedia.org/wiki/Infrastructure_as_code)
+* [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)
+* [Jenkins Shared Libs](https://jenkins.io/doc/book/pipeline/shared-libraries/)
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+* Please join #m3-devops slack channel
