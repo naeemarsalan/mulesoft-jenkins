@@ -6,6 +6,7 @@ def call(Map pipelineParams) {
       kubernetes {
         yaml libraryResource('kubernetes.yaml')
       }
+    }
 
     stages {
 
