@@ -6,9 +6,20 @@ def call(Map pipelineParams) {
       kubernetes {
         yaml libraryResource('kubernetes.yaml')
       }
-    }
 
     stages {
+
+      stage('Fix Env') {
+        steps {
+          container('maven') {
+            script {
+              def scriptContent = libraryResource "fix-anypoint-env.sh"
+              writeFile file: 'fix-anypoint-env.sh', text: scriptContent
+              sh "bash fix-anypoint-env.sh"
+            }
+          }
+        }
+      }
 
       stage('Linter') {
         when {
