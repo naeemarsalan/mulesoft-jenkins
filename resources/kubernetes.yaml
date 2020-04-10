@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    some-label: mule
+  namespace: jenkins
+spec:
+  containers:
+  - name: maven
+    image: maven:3.6.1-alpine
+    securityContext:
+      privileged: true
+    tty: true 
+    command: ['cat']
+  - name: anypoint-cli
+    image: docker.kube.cloudapps.ms3-inc.com/anypoint-cli/3:1
+    securityContext:
+      privileged: true
+    tty: true 
+    command: ['cat']
+  imagePullSecrets:
+    - name: nexus
+
