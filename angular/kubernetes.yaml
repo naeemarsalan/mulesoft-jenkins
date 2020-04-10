@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    some-label: angular
+  namespace: jenkins
+spec:
+  containers:
+  - name: node
+    image: node:11-stretch
+    securityContext:
+      privileged: true
+    tty: true 
+    command: ['cat']
+  - name: awscli
+    image: xueshanf/awscli:latest
+    securityContext:
+      privileged: true
+    tty: true 
+    command: ['cat']
+  imagePullSecrets:
+    - name: nexus

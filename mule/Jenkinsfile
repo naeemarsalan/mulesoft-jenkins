@@ -1,0 +1,98 @@
+def artifactName
+def version
+pipeline {
+  agent {
+    kubernetes {
+      label 'mule'
+      yamlFile 'mule/kubernetes.yaml'
+    }
+  }
+  stages {
+    stage ('checkout SCM') {
+      steps {
+        container('jnlp') {
+          script {
+            echo "Checking out from branch "+"${branch}"
+            timeout(time: Integer.parseInt("$gitclone_timeout"), unit: 'SECONDS') {
+              retry(3) {
+                checkout([$class: 'GitSCM', branches: [[name: '*/'+"$branch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'bitbucket to jenkins', url: "$application_git_url"]]])
+                pom = readMavenPom file: 'pom.xml'
+                artifactName = readMavenPom().getArtifactId()
+                version = readMavenPom().getVersion()
+                groupName = readMavenPom().getGroupId()
+              }
+            }
+          }
+        }
+      }
+    }
+    stage('Test') {
+      steps {
+        container('maven') {
+          script {
+            configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
+              withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
+                if (Boolean.parseBoolean(env.env_override)) {
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${env_var} -Dapp.key=${appkey}"
+                } else {
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${devenv} -Dapp.key=${appkey}"
+                }
+                publishHTML (target: [
+                  allowMissing: false,
+                  alwaysLinkToLastBuild: false,
+                  keepAll: true,
+                  reportDir: 'target/site/munit/coverage',
+                  reportFiles: 'summary.html',
+                  reportName: "Coverage Report"
+                ])
+              }
+            }
+          }
+        }
+      }
+    }
+    stage('build') {
+      steps{
+        container('maven') {
+          script {
+            configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
+              sh "mvn -s '$MAVEN_SETTINGS_FILE' clean package -DskipTests"
+            }
+          }
+        }
+      }
+    }
+    stage('uploadToNexus') {
+      steps {
+        container('maven') {
+          script {
+            dir('target') {
+              configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
+                sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=$groupName -DartifactId=$artifactName -Dversion=$version -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=https://maven.ms3-inc.com/repository/maven-snapshots/ -Dfile=$artifactName-$version-mule-application.jar -DuniqueVersion=false"
+              }
+            }
+          }
+        }
+      }
+    }
+    stage('deploy to anypoint') {
+      steps {
+        container('anypoint-cli') {
+          script {
+            withCredentials([usernamePassword(credentialsId: 'anypointplatform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')]) {
+              dir('target') {
+                //ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr cloudhub-application list')
+                def ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_environment} runtime-mgr standalone-application list -o json')
+                echo "${ApplicationList}"
+                if ("${ApplicationList}" =~ "${artifactName}")
+                  sh 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr standalone-application modify '+"$artifactName"+' '+"$artifactName"+'-'+"$version"+'-mule-application.jar'
+                else
+                  sh 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment='+"$anypoint_environment"+' runtime-mgr standalone-application deploy '+"$server_name"+' '+"$artifactName"+' '+"$artifactName"+'-'+"$version"+'-mule-application.jar'
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

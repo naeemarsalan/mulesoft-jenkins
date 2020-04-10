@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd" xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <profiles>
+    <profile>
+      <repositories>
+        <repository>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <id>central</id>
+          <name>libs-release</name>
+          <url>http://maven.ms3-inc.com/artifactory/libs-release</url>
+        </repository>
+        <repository>
+          <snapshots />
+          <id>snapshots</id>
+          <name>libs-snapshot</name>
+          <url>http://maven.ms3-inc.com/artifactory/libs-snapshot</url>
+        </repository>
+        <repository>
+          <snapshots />
+          <id>Mule Nexus</id>
+          <name>mule-nexus</name>
+          <url>http://maven.ms3-inc.com/artifactory/mule-nexus</url>
+        </repository>
+        <repository>
+          <snapshots />
+          <id>JCenter</id>
+          <name>jcenter</name>
+          <url>http://maven.ms3-inc.com/artifactory/jcenter</url>
+        </repository>
+        <repository>
+          <snapshots />
+          <id>Maven Central</id>
+          <name>maven-central</name>
+          <url>http://maven.ms3-inc.com/artifactory/maven-central</url>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <id>central</id>
+          <name>libs-release</name>
+          <url>http://maven.ms3-inc.com/artifactory/libs-release</url>
+        </pluginRepository>
+        <pluginRepository>
+          <snapshots />
+          <id>snapshots</id>
+          <name>libs-snapshot</name>
+          <url>http://maven.ms3-inc.com/artifactory/libs-snapshot</url>
+        </pluginRepository>
+      </pluginRepositories>
+      <id>artifactory</id>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>artifactory</activeProfile>
+  </activeProfiles>
+</settings>

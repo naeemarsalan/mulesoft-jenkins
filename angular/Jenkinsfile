@@ -1,0 +1,47 @@
+def artifactName
+def version
+pipeline {
+  agent {
+    kubernetes {
+      label 'node'
+      yamlFile 'angular/kubernetes.yaml'
+    }
+  }
+  stages {
+    stage ('Checkout SCM') {
+      steps{
+        container('jnlp'){
+          script{
+            echo "Checking out from branch "+"${branch}"
+            timeout(time: Integer.parseInt("$gitclone_timeout"), unit: 'SECONDS') {
+              retry(3) {
+                checkout([$class: 'GitSCM', branches: [[name: '*/'+"$branch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'bitbucket to jenkins', url: "$application_git_url"]]])
+              }
+            }
+          }
+        }
+      }
+    }
+    stage('Build') {
+      steps{
+        container('node'){
+         sh "npm install"
+         sh "npm install -g @angular/cli@7.0.6"
+         sh "ng build"
+         sh "ls -all"
+        }
+      }
+    }
+    stage('Deploy') {
+      steps{
+        container('awscli'){
+          script{
+            withCredentials([usernamePassword(credentialsId: 's3.writer.iotsandbox', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]){
+              sh "aws s3 sync --delete --region us-east-1 $WORKSPACE/dist/ s3://${s3_bucket}/"
+            }
+          }
+        }
+      }
+    }
+  }
+}
