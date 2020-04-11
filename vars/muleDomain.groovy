@@ -43,6 +43,7 @@ def call(Map pipelineParams) {
                   reportFiles: 'summary.html',
                   reportName: "Coverage Report"
                 ])
+                }
               }
             }
           }
