@@ -10,18 +10,6 @@ def call(Map pipelineParams) {
 
     stages {
 
-      stage('Fix Env') {
-        steps {
-          container('maven') {
-            script {
-              def scriptContent = libraryResource "fix-anypoint-env.sh"
-              writeFile file: 'fix-anypoint-env.sh', text: scriptContent
-              sh "bash fix-anypoint-env.sh"
-            }
-          }
-        }
-      }
-
       stage('Linter') {
         when {
           expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
@@ -46,7 +34,11 @@ def call(Map pipelineParams) {
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'appenv')]) {
-                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${anypoint_env} -Dapp.key=${appkey}"
+                  if (Boolean.parseBoolean(env.maven_env)) {
+                    sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${maven_env} -Dapp.key=${appkey}"
+                  } else {
+                    sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${anypoint_env} -Dapp.key=${appkey}"
+                  }
                 }
                 publishHTML (target: [
                   allowMissing: false,
