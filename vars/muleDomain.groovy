@@ -17,9 +17,9 @@ def call(Map pipelineParams) {
         steps {
           container('maven') {
             script {
-              def scriptContent = libraryResource "ms3-mule-linter.sh"
-              writeFile file: 'ms3-mule-linter.sh', text: scriptContent
-              sh "bash ms3-mule-linter.sh"
+              def scriptContent = libraryResource "ms3-mule-domain-linter.sh"
+              writeFile file: 'ms3-mule-domain-linter.sh', text: scriptContent
+              sh "bash ms3-mule-domain-linter.sh"
             }
           }
         }
