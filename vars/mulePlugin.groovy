@@ -51,9 +51,7 @@ def call(Map pipelineParams) {
       }
 
       stage('Build') {
-        when {
-          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
-        }
+
         steps {
           container('maven') {
             script {
@@ -66,9 +64,7 @@ def call(Map pipelineParams) {
       }
 
       stage('Upload to Nexus') {
-        when {
-          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
-        }
+
         steps {
           container('maven') {
             script {
