@@ -12,7 +12,7 @@ def call(Map pipelineParams) {
 
       stage('Linter') {
         when {
-          expression { return readFile('pom.xml').contains('packaging>mule-domain</packaging>') }
+          expression { return readFile('pom.xml').contains('<packaging>mule-domain</packaging>') }
         }
         steps {
           container('maven') {
@@ -27,7 +27,7 @@ def call(Map pipelineParams) {
 
       stage('Test') {
         when {
-          expression { return readFile('pom.xml').contains('packaging>mule-domain</packaging>') }
+          expression { return readFile('pom.xml').contains('<packaging>mule-domain</packaging>') }
         }
         steps {
           container('maven') {
