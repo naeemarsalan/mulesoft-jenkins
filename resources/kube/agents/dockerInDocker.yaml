@@ -12,6 +12,12 @@ spec:
       privileged: true
     tty: true 
     command: ['cat']
+  - name: maven-jdk-8
+    image: maven:3.6-openjdk-8-slim
+    securityContext:
+      privileged: true
+    tty: true 
+    command: ['cat']
   - name: dind
     image: docker:18.05-dind
     securityContext:

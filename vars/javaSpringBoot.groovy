@@ -9,7 +9,7 @@ def call(Map pipelineParams) {
     stages {
       stage('Test') {
         steps {
-          container('maven') {
+          container('maven-jdk-8') {
             script{
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
@@ -43,7 +43,7 @@ def call(Map pipelineParams) {
 
       stage('Upload To Nexus') {
         steps {
-          container('maven') {
+          container('maven-jdk-8') {
             script {
               // Read pom.xml
               pom = readMavenPom file: 'pom.xml'
@@ -67,12 +67,15 @@ def call(Map pipelineParams) {
       stage('Build Docker Image') {
         steps {
           container('dind') {
-            withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-              sh '''    
-                docker login docker.kube.cloudapps.ms3-inc.com -u $USERNAME -p $PASSWORD
-                docker build -t docker.kube.cloudapps.ms3-inc.com/${app}/dev:${GIT_COMMIT} .
-                docker push docker.kube.cloudapps.ms3-inc.com/${app}/dev:${GIT_COMMIT}
-              '''
+            configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
+              withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                sh '''
+                  cp '$MAVEN_SETTINGS_FILE' mavensettings.xml
+                  docker login docker.kube.cloudapps.ms3-inc.com -u $USERNAME -p $PASSWORD
+                  docker build -t docker.kube.cloudapps.ms3-inc.com/${app}/dev:${GIT_COMMIT} .
+                  docker push docker.kube.cloudapps.ms3-inc.com/${app}/dev:${GIT_COMMIT}
+                '''
+              }
             }
           }
         }
