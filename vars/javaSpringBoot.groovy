@@ -70,7 +70,7 @@ def call(Map pipelineParams) {
             configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
               withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                 sh '''
-                  cp '$MAVEN_SETTINGS_FILE' mavensettings.xml
+                  cp $MAVEN_SETTINGS_FILE mavensettings.xml
                   docker login docker.kube.cloudapps.ms3-inc.com -u $USERNAME -p $PASSWORD
                   docker build -t docker.kube.cloudapps.ms3-inc.com/${app}/dev:${GIT_COMMIT} .
                   docker push docker.kube.cloudapps.ms3-inc.com/${app}/dev:${GIT_COMMIT}
