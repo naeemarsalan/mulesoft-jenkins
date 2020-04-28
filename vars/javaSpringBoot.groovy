@@ -13,8 +13,8 @@ def call(Map pipelineParams) {
             script{
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
-                  sh "mvn clean test"
-/*                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test"
+                  sh "cat '$MAVEN_SETTINGS_FILE'"
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test"
                   publishHTML (target: [
                     allowMissing: false,
                     alwaysLinkToLastBuild: false,
@@ -23,7 +23,6 @@ def call(Map pipelineParams) {
                     reportFiles: 'summary.html',
                     reportName: "Coverage Report"
                   ])
-*/
                 }
               }
             } 
