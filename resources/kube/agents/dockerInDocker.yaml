@@ -7,13 +7,7 @@ metadata:
 spec: 
   containers:
   - name: maven
-    image: maven:3.6.2
-    securityContext:
-      privileged: true
-    tty: true 
-    command: ['cat']
-  - name: maven-jdk-8
-    image: maven:3.6-openjdk-8-slim
+    image: maven:3.6-slim
     securityContext:
       privileged: true
     tty: true 

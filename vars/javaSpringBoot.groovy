@@ -9,7 +9,7 @@ def call(Map pipelineParams) {
     stages {
       stage('Test') {
         steps {
-          container('maven-jdk-8') {
+          container('maven') {
             script{
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
@@ -31,7 +31,7 @@ def call(Map pipelineParams) {
 
       stage('Build Java Artifact') {
         steps {
-          container('maven-jdk-8') {
+          container('maven') {
             script{
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 sh "mvn -s '$MAVEN_SETTINGS_FILE' clean package -DskipTests"
@@ -43,7 +43,7 @@ def call(Map pipelineParams) {
 
       stage('Upload To Nexus') {
         steps {
-          container('maven-jdk-8') {
+          container('maven') {
             script {
               // Read pom.xml
               pom = readMavenPom file: 'pom.xml'
