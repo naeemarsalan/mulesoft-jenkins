@@ -31,7 +31,7 @@ def call(Map pipelineParams) {
 
       stage('Build Java Artifact') {
         steps {
-          container('maven') {
+          container('maven-jdk-8') {
             script{
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 sh "mvn -s '$MAVEN_SETTINGS_FILE' clean package -DskipTests"
