@@ -84,13 +84,11 @@ def call(Map pipelineParams) {
               sh 'mkdir -p ~/.kube && cp "$FILE" ~/.kube/config'
             }
 //            checkout([$class: 'GitSCM', branches: [[name: '*/'+"$dbranch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'bitbucket to jenkins', url: "$dapplication_git_url"]]])
-            script {
-              writefile file: 'javaSpringBoot.yaml' text: libraryResource('resources/kube/manifests/javaSpringBoot.yaml')
-              sh '''
-                envsubst < javaSpringBoot.yaml | tee javaSpringBootParsed.yaml 1>/dev/null
-                cat javaSpringBootParsed.yaml 
-              '''
-            }
+            writefile([file: 'javaSpringBoot.yaml' text: libraryResource('resources/kube/manifests/javaSpringBoot.yaml')])
+            sh '''
+              envsubst < javaSpringBoot.yaml | tee javaSpringBootParsed.yaml 1>/dev/null
+              cat javaSpringBootParsed.yaml 
+            '''
 /*            sh '''
               envsubst < javaSpringBoot.yaml | tee javaSpringBootParsed.yaml 1>/dev/null
               kubectl apply -f javaSpringBootParsed.yaml 
