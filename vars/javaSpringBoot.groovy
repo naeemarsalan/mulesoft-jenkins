@@ -13,7 +13,6 @@ def call(Map pipelineParams) {
             script{
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
-                  sh "cat '$MAVEN_SETTINGS_FILE'"
                   sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test"
                   publishHTML (target: [
                     allowMissing: false,
