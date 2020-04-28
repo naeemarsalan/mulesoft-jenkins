@@ -7,16 +7,10 @@ def call(Map pipelineParams) {
       }
     }
     stages {
-      stage('Test') {
+/*      stage('Test') {
         steps {
           container('maven') {
             script{
-              // Read pom.xml:
-              pom = readMavenPom file: 'pom.xml'
-              artifactName = readMavenPom().getArtifactId()
-              version = readMavenPom().getVersion()
-              groupName = readMavenPom().getGroupId()
-              // Run tests:
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
                   sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test"
@@ -51,6 +45,12 @@ def call(Map pipelineParams) {
         steps {
           container('maven') {
             script {
+              // Read pom.xml
+              pom = readMavenPom file: 'pom.xml'
+              artifactName = readMavenPom().getArtifactId()
+              version = readMavenPom().getVersion()
+              groupName = readMavenPom().getGroupId()
+              // Upload to nexus
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 dir('target') {
                   if ("${version}" =~ "SNAPSHOT")
@@ -63,7 +63,7 @@ def call(Map pipelineParams) {
           }
         }
       }
-
+*/
       stage('Build Docker image') {
         steps {
           container('dind') {
