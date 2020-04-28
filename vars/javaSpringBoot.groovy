@@ -76,7 +76,7 @@ def call(Map pipelineParams) {
             }
           }
         }
-
+      }
       stage('Deploy') {
         steps {
           container('kubectl') {
