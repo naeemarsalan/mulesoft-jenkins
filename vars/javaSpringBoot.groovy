@@ -7,13 +7,14 @@ def call(Map pipelineParams) {
       }
     }
     stages {
-/*      stage('Test') {
+      stage('Test') {
         steps {
           container('maven') {
             script{
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
-                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test"
+                  sh "mvn clean test"
+/*                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test"
                   publishHTML (target: [
                     allowMissing: false,
                     alwaysLinkToLastBuild: false,
@@ -22,6 +23,7 @@ def call(Map pipelineParams) {
                     reportFiles: 'summary.html',
                     reportName: "Coverage Report"
                   ])
+*/
                 }
               }
             } 
@@ -63,8 +65,8 @@ def call(Map pipelineParams) {
           }
         }
       }
-*/
-      stage('Build Docker image') {
+
+      stage('Build Docker Image') {
         steps {
           container('dind') {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
@@ -77,7 +79,8 @@ def call(Map pipelineParams) {
           }
         }
       }
-      stage('Deploy') {
+
+      stage('Deploy to k8s') {
         steps {
           container('kubectl') {
             withCredentials([file(credentialsId: 'k8s-east1', variable: 'FILE')]) {
