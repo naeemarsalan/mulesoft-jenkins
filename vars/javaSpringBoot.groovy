@@ -77,12 +77,15 @@ def call(Map pipelineParams) {
             configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
               sh "cp '$MAVEN_SETTINGS_FILE' mavensettings.xml"
             }
+            script {
+              if ( appEnv =~ "dev")
+                version = "latest"
+            }
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
-                docker build -t ${dockerRegistryUrl}/${appName}/${appEnv}:${version} -t ${dockerRegistryUrl}/${appName}/${appEnv}:latest .
+                docker build -t ${dockerRegistryUrl}/${appName}/${appEnv}:${version} .
                 docker push ${dockerRegistryUrl}/${appName}/${appEnv}:${version}
-                docker push ${dockerRegistryUrl}/${appName}/${appEnv}:latest
               """
             }
           }
@@ -94,14 +97,14 @@ def call(Map pipelineParams) {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
         }
         steps {
-          container('kubectl') {
-            withCredentials([file(credentialsId: 'k8s-east1', variable: 'FILE')]) {
-              sh 'mkdir -p ~/.kube && cp "$FILE" ~/.kube/config'
-            }
+          container('jnlp') {
+            writeFile([file: '${appName}-deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
+            writeFile([file: '${appName}-istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
+            writeFile([file: '${appName}-istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
             sh """
-              envsubst < "${libraryResource('kube/manifests/javaspringboot/deployment.yaml')}" | tee javaSpringBootParsed.yaml 1>/dev/null
-              echo "This manifest should be deployed to k8s via PR from jenkins to k8s repo (DOPS-242). But for now the deployment is manual. TBD"
-              cat javaSpringBootParsed.yaml 
+              envsubst < ${appName}-*.yaml
+              echo "These manifests should be deployed to k8s via PR from jenkins to k8s repo (DOPS-242). But for now the deployment is manual. TBD"
+              cat ${appname}-*.yaml
             """
           }
         }
