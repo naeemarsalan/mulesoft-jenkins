@@ -43,11 +43,16 @@ def call(Map pipelineParams) {
         steps {
           container('maven') {
             script {
-              // Read pom.xml
+              // Read pom.xml and populate vars
               pom = readMavenPom file: 'pom.xml'
               artifactName = readMavenPom().getArtifactId()
               version = readMavenPom().getVersion()
               groupName = readMavenPom().getGroupId()
+              if ( GIT_BRANCH =~ "develop")
+                appEnv = "dev"
+              if ( GIT_BRANCH =~ "master")
+                appEnv = "prod"
+              echo "${appEnv}"
               // Upload to nexus
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 dir('target') {
@@ -74,9 +79,9 @@ def call(Map pipelineParams) {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh '''
                 docker login ${dockerRegistryUrl} -u $USERNAME -p $PASSWORD
-                docker build -t ${dockerRegistryUrl}/${app}/${GIT_BRANCH}:${version} -t ${dockerRegistryUrl}/${app}/${GIT_BRANCH}:latest .
-                docker push ${dockerRegistryUrl}/${app}/${GIT_BRANCH}:${version}
-                docker push ${dockerRegistryUrl}/${app}/${GIT_BRANCH}:latest
+                docker build -t ${dockerRegistryUrl}/${appName}/${appEnv}:${version} -t ${dockerRegistryUrl}/${appName}/${appEnv}:latest .
+                docker push ${dockerRegistryUrl}/${appName}/${appEnv}:${version}
+                docker push ${dockerRegistryUrl}/${appName}/${appEnv}:latest
               '''
             }
           }
@@ -92,9 +97,8 @@ def call(Map pipelineParams) {
             withCredentials([file(credentialsId: 'k8s-east1', variable: 'FILE')]) {
               sh 'mkdir -p ~/.kube && cp "$FILE" ~/.kube/config'
             }
-            writeFile([file: 'javaSpringBoot.yaml', text: libraryResource('kube/manifests/javaSpringBoot.yaml')])
             sh '''
-              envsubst < javaSpringBoot.yaml | tee javaSpringBootParsed.yaml 1>/dev/null
+              envsubst < "${libraryResource('kube/manifests/javaspringboot/deployment.yaml')}" | tee javaSpringBootParsed.yaml 1>/dev/null
               echo "This manifest should be deployed to k8s via PR from jenkins to k8s repo (DOPS-242). But for now the deployment is manual. TBD"
               cat javaSpringBootParsed.yaml 
             '''

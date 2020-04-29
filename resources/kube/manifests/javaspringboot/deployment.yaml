@@ -1,0 +1,44 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ${appName}-${appEnv}
+  namespace: ${namespace}-${appEnv}
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  strategy:
+      type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ${appName}
+    spec:
+      containers:
+      - name: ${appName}-${appEnv}
+        image: ${dockerRegistryUrl}/${appName}/${appEnv}:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: ${appPort}
+          name: http
+          protocol: TCP
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: regsecret1
+      restartPolicy: Always
+      schedulerName: default-scheduler
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${appName}-${appEnv}-service
+  namespace: ${namespace}-${appEnv}
+spec:
+  ports:
+  - name: ${appName}-${appEnv}
+    port: ${appPort}
+    protocol: TCP
+    targetPort: ${appPort}
+  selector:
+    app: ${appName}
+  type: ClusterIP

@@ -1,0 +1,17 @@
+  - hosts:
+    - "${appName}-${appEnv}.kube.cloudapps.ms3-inc.com"
+    port:
+      number: 80
+      name: ${appName}-http
+      protocol: HTTP
+    tls:
+      httpsRedirect: true
+  - hosts:
+    - "${appName}-${appEnv}.kube.cloudapps.ms3-inc.com"
+    port:
+      number: 443
+      name: ${appName}-https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: cloudapps-wildcard
