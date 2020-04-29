@@ -79,6 +79,7 @@ def call(Map pipelineParams) {
             }
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh '''
+                echo ${appEnv}:${version}
                 docker login ${dockerRegistryUrl} -u $USERNAME -p $PASSWORD
                 docker build -t ${dockerRegistryUrl}/${appName}/${appEnv}:${version} -t ${dockerRegistryUrl}/${appName}/${appEnv}:latest .
                 docker push ${dockerRegistryUrl}/${appName}/${appEnv}:${version}
