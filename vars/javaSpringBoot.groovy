@@ -98,11 +98,11 @@ def call(Map pipelineParams) {
             withCredentials([file(credentialsId: 'k8s-east1', variable: 'FILE')]) {
               sh 'mkdir -p ~/.kube && cp "$FILE" ~/.kube/config'
             }
-            sh '''
+            sh """
               envsubst < "${libraryResource('kube/manifests/javaspringboot/deployment.yaml')}" | tee javaSpringBootParsed.yaml 1>/dev/null
               echo "This manifest should be deployed to k8s via PR from jenkins to k8s repo (DOPS-242). But for now the deployment is manual. TBD"
               cat javaSpringBootParsed.yaml 
-            '''
+            """
           }
         }
       }
