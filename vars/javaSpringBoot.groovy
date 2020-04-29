@@ -102,9 +102,11 @@ def call(Map pipelineParams) {
             writeFile([file: '${appName}-istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
             writeFile([file: '${appName}-istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
             sh """
-              envsubst < ${appName}-*.yaml
+              envsubst < ${appName}-deployment.yaml
+              envsubst < ${appName}-istio-vs.yaml
+              envsubst < ${appName}-istio-gw.yaml
               echo "These manifests should be deployed to k8s via PR from jenkins to k8s repo (DOPS-242). But for now the deployment is manual. TBD"
-              cat ${appname}-*.yaml
+              cat ${appname}*.yaml
             """
           }
         }
