@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: ${app}-test
-        image: docker.kube.cloudapps.ms3-inc.com/${app}/dev:${GIT_COMMIT}
+        image: ${dockerRegistryUrl}/${app}/${GIT_BRANCH}:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8081

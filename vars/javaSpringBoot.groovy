@@ -14,14 +14,6 @@ def call(Map pipelineParams) {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
                   sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test"
-                  publishHTML (target: [
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: false,
-                    keepAll: true,
-                    reportDir: 'target/site/munit/coverage',
-                    reportFiles: 'summary.html',
-                    reportName: "Coverage Report"
-                  ])
                 }
               }
             } 
@@ -30,6 +22,9 @@ def call(Map pipelineParams) {
       }
 
       stage('Build Java Artifact') {
+        when {
+          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+        }
         steps {
           container('maven') {
             script{
@@ -42,6 +37,9 @@ def call(Map pipelineParams) {
       }
 
       stage('Upload To Nexus') {
+        when {
+          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+        }
         steps {
           container('maven') {
             script {
@@ -65,40 +63,41 @@ def call(Map pipelineParams) {
       }
 
       stage('Build Docker Image') {
+        when {
+          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+        }
         steps {
           container('dind') {
             configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-              withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                sh '''
-                  cp $MAVEN_SETTINGS_FILE mavensettings.xml
-                  docker login docker.kube.cloudapps.ms3-inc.com -u $USERNAME -p $PASSWORD
-                  docker build -t docker.kube.cloudapps.ms3-inc.com/${app}/dev:${GIT_COMMIT} .
-                  docker push docker.kube.cloudapps.ms3-inc.com/${app}/dev:${GIT_COMMIT}
-                '''
-              }
+              sh "cp '$MAVEN_SETTINGS_FILE' mavensettings.xml"
+            }
+            withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+              sh '''
+                docker login ${dockerRegistryUrl} -u $USERNAME -p $PASSWORD
+                docker build -t ${dockerRegistryUrl}/${app}/${GIT_BRANCH}:${version} -t ${dockerRegistryUrl}/${app}/${GIT_BRANCH}:latest .
+                docker push ${dockerRegistryUrl}/${app}/${GIT_BRANCH}:${version}
+                docker push ${dockerRegistryUrl}/${app}/${GIT_BRANCH}:latest
+              '''
             }
           }
         }
       }
 
       stage('Deploy to k8s') {
+        when {
+          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+        }
         steps {
           container('kubectl') {
             withCredentials([file(credentialsId: 'k8s-east1', variable: 'FILE')]) {
               sh 'mkdir -p ~/.kube && cp "$FILE" ~/.kube/config'
             }
-//            checkout([$class: 'GitSCM', branches: [[name: '*/'+"$dbranch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'bitbucket to jenkins', url: "$dapplication_git_url"]]])
             writeFile([file: 'javaSpringBoot.yaml', text: libraryResource('kube/manifests/javaSpringBoot.yaml')])
             sh '''
               envsubst < javaSpringBoot.yaml | tee javaSpringBootParsed.yaml 1>/dev/null
+              echo "This manifest should be deployed to k8s via PR from jenkins to k8s repo (DOPS-242). But for now the deployment is manual. TBD"
               cat javaSpringBootParsed.yaml 
             '''
-/*            sh '''
-              envsubst < javaSpringBoot.yaml | tee javaSpringBootParsed.yaml 1>/dev/null
-              kubectl apply -f javaSpringBootParsed.yaml 
-              kubectl delete pods -l app=${app} -n ${namespace}
-            '''
-*/
           }
         }
       }
