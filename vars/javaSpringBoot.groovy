@@ -48,9 +48,9 @@ def call(Map pipelineParams) {
               artifactName = readMavenPom().getArtifactId()
               version = readMavenPom().getVersion()
               groupName = readMavenPom().getGroupId()
-              if ( GIT_BRANCH =~ "develop")
+              if ( GIT_BRANCH =~ ".*develop")
                 appEnv = "dev"
-              if ( GIT_BRANCH =~ "master")
+              if ( GIT_BRANCH =~ ".*master")
                 appEnv = "prod"
               echo "${appEnv}"
               // Upload to nexus
