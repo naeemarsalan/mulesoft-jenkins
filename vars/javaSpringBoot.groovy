@@ -101,7 +101,7 @@ def call(Map pipelineParams) {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
         }
         steps {
-          container('kubectl') {
+          container('jnlp') {
             
             // Debug
             script {
@@ -119,12 +119,14 @@ def call(Map pipelineParams) {
             }
 
             writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
+            sh """
+              printenv | sort
+              envsubst < deployment.yaml | tee new-deployment.yaml 1>/dev/null; cat new-deployment.yaml"
+            """
+/*
             writeFile([file: 'istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
             writeFile([file: 'istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
 
-            sh "envsubst < deployment.yaml | tee new-deployment.yaml 1>/dev/null; cat new-deployment.yaml"
-
-/*
               envsubst < istio-vs.yaml | tee ${appName}-istio-vs.yaml 1>/dev/null
               echo "This is istio VS config:"
               cat ${appName}-istio-vs.yaml
