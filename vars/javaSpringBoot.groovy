@@ -7,7 +7,7 @@ def call(Map pipelineParams) {
       }
     }
     environment {
-      namespace = "java-springboot-apps"
+      namespace = "java-springboot-apps" // without "-dev/-prod" 
     }
     stages {
       stage('Test') {
@@ -101,17 +101,17 @@ def call(Map pipelineParams) {
         }
         steps {
           container('kubectl') {
-            writeFile([file: '${appName}-deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
-            writeFile([file: '${appName}-istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
-            writeFile([file: '${appName}-istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
+            writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
+            writeFile([file: 'istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
+            writeFile([file: 'istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
             sh """
-              envsubst < ${appName}-deployment.yaml | tee ${appName}-deployment.yaml 1>/dev/null
+              envsubst < deployment.yaml | tee ${appName}-deployment.yaml 1>/dev/null
               echo "This is our deployment:"
               cat ${appName}-deployment.yaml
-              envsubst < ${appName}-istio-vs.yaml | tee ${appName}-istio-vs.yaml 1>/dev/null
+              envsubst < istio-vs.yaml | tee ${appName}-istio-vs.yaml 1>/dev/null
               echo "This is istio VS config:"
               cat ${appName}-istio-vs.yaml
-              envsubst < ${appName}-istio-gw.yaml | tee ${appName}-istio-gw.yaml 1>/dev/null
+              envsubst < istio-gw.yaml | tee ${appName}-istio-gw.yaml 1>/dev/null
               echo "This snippet should be added to k8s gateway configuration:"
               cat ${appname}-istio-gw.yaml
             """
