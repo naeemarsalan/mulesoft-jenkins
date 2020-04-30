@@ -121,11 +121,9 @@ def call(Map pipelineParams) {
             writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
             writeFile([file: 'istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
             writeFile([file: 'istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
-            sh '''
-              cat deployment.yaml
-              envsubst < deployment.yaml > ${appName}-deployment.yaml
-              cat ${appName}-deployment.yaml
-            '''
+
+            sh "cat deployment.yaml; envsubst < deployment.yaml > ${appName}-deployment.yaml; cat ${appName}-deployment.yaml"
+
 /*
               envsubst < istio-vs.yaml | tee ${appName}-istio-vs.yaml 1>/dev/null
               echo "This is istio VS config:"
