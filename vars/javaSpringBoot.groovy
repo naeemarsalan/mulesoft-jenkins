@@ -106,15 +106,19 @@ def call(Map pipelineParams) {
             writeFile([file: '${appName}-istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
             sh """
               envsubst < ${appName}-deployment.yaml | tee ${appName}-deployment.yaml 1>/dev/null
+              echo "This is our deployment:"
               cat ${appName}-deployment.yaml
               envsubst < ${appName}-istio-vs.yaml | tee ${appName}-istio-vs.yaml 1>/dev/null
+              echo "This is istio VS config:"
               cat ${appName}-istio-vs.yaml
               envsubst < ${appName}-istio-gw.yaml | tee ${appName}-istio-gw.yaml 1>/dev/null
               echo "This snippet should be added to k8s gateway configuration:"
               cat ${appname}-istio-gw.yaml
-              # kubectl apply -f manifest/manifest-new.yaml
-              # kubectl delete pods -l app=${app} -n ${namespace}-${appEnv}
             """
+/*
+              kubectl apply -f ${appName}-deployment.yaml
+              kubectl delete pods -l app=${appName} -n ${namespace}-${appEnv}
+*/
           }
         }
       }
