@@ -6,11 +6,7 @@ def call(Map pipelineParams) {
         yaml libraryResource('kube/agents/dockerInDocker.yaml')
       }
     }
-    environment {
-      namespace = "java-springboot-apps" // without "-dev/-prod" 
-    }
     stages {
-/*  
       stage('Test') {
         steps {
           container('maven') {
@@ -50,21 +46,23 @@ def call(Map pipelineParams) {
               // Read pom.xml and populate vars
               pom = readMavenPom file: 'pom.xml'
               artifactName = readMavenPom().getArtifactId()
-              version = readMavenPom().getVersion()
+              env.appVersion = readMavenPom().getVersion()
               groupName = readMavenPom().getGroupId()
-              if ( GIT_BRANCH =~ "develop")
-                appEnv = "dev"
-              if ( GIT_BRANCH =~ "master")
-                appEnv = "prod"
-              echo "${appEnv}"
 
-              // Upload to nexus
+              // Environmnent depends on the branch
+              if ( GIT_BRANCH =~ "develop")
+                env.appEnv = "dev"
+              if ( GIT_BRANCH =~ "master")
+                env.appEnv = "prod"
+              echo "Environment = ${appEnv}" //debugging purposes
+
+              // Upload to nexus, target repo is depending on is version a snapshot one or not
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 dir('target') {
-                  if ("${version}" =~ "SNAPSHOT")
-                    sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusSnapshotUrl} -Dfile=${artifactName}-${version}.jar -DuniqueVersion=false"
+                  if ("${appVersion}" =~ "SNAPSHOT")
+                    sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${appVersion} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusSnapshotUrl} -Dfile=${artifactName}-${appVersion}.jar -DuniqueVersion=false"
                   else
-                    sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusReleaseUrl} -Dfile=${artifactName}-${version}.jar -DuniqueVersion=false"
+                    sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${appVersion} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusReleaseUrl} -Dfile=${artifactName}-${appVersion}.jar -DuniqueVersion=false"
                 }
               }
             }
@@ -81,62 +79,42 @@ def call(Map pipelineParams) {
             configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
               sh "cp '$MAVEN_SETTINGS_FILE' mavensettings.xml"
             }
+            // For dev application there should be only one image tag:latest
             script {
               if ( appEnv =~ "dev")
-                version = "latest"
+                env.appVersion = "latest" 
             }
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
-                docker build -t ${dockerRegistryUrl}/${appName}/${appEnv}:${version} .
-                docker push ${dockerRegistryUrl}/${appName}/${appEnv}:${version}
+                docker build -t ${dockerRegistryUrl}/${appName}/${appEnv}:${appVersion} .
+                docker push ${dockerRegistryUrl}/${appName}/${appEnv}:${appVersion}
               """
             }
           }
         }
       }
-*/
+
       stage('Deploy to k8s') {
         when {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
         }
         steps {
           container('kubectl') {
-            
-            // Debug
-            script {
-              pom = readMavenPom file: 'pom.xml'
-              artifactName = readMavenPom().getArtifactId()
-              appVersion = readMavenPom().getVersion()
-              groupName = readMavenPom().getGroupId()
-              if ( GIT_BRANCH =~ "develop")
-                env.appEnv = "dev"
-              if ( GIT_BRANCH =~ "master")
-                env.appEnv = "prod"
-              echo "${appEnv}"
-              if ( appEnv =~ "dev")
-                env.appVersion = "latest"
-
-            // Make vars global
-            }
-
             writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
-            sh """
-              printenv | sort
-              envsubst < deployment.yaml > ${appName}-deployment.yaml; cat ${appName}-deployment.yaml
-            """
-/*
             writeFile([file: 'istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
             writeFile([file: 'istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
-
-              envsubst < istio-vs.yaml | tee ${appName}-istio-vs.yaml 1>/dev/null
-              echo "This is istio VS config:"
-              cat ${appName}-istio-vs.yaml
-              envsubst < istio-gw.yaml | tee ${appName}-istio-gw.yaml 1>/dev/null
-              echo "This snippet should be added to k8s gateway configuration:"
-              cat ${appname}-istio-gw.yaml
+            sh """
+              envsubst < deployment.yaml > ${appName}-deployment.yaml
+              envsubst < istio-vs.yaml > ${appName}-istio-vs.yaml
+              envsubst < istio-gw.yaml > ${appName}-istio-gw.yaml
+              # Check vars substitution:
+              cat ${appName}-*.yaml
+            """
+/*
               kubectl apply -f ${appName}-deployment.yaml
               kubectl delete pods -l app=${appName} -n ${namespace}-${appEnv}
+              kubectl apply -f ${appName}-istio-vs.yaml
 */
           }
         }
