@@ -116,12 +116,16 @@ def call(Map pipelineParams) {
               echo "${appEnv}"
               if ( appEnv =~ "dev")
                 version = "latest"
+
+            // Make vars global
+            env.version = version
+            env.appEnv = appEnv
             }
 
             writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
             sh """
               printenv | sort
-              envsubst < deployment.yaml | tee new-deployment.yaml 1>/dev/null; cat new-deployment.yaml"
+              envsubst < deployment.yaml > tee ${appName}-deployment.yaml; cat ${appName}-deployment.yaml"
             """
 /*
             writeFile([file: 'istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
