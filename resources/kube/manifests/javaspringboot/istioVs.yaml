@@ -12,6 +12,6 @@ spec:
   http:
   - route:
     - destination:
-        host: ${appName}-${appEnv}-service.${namespace}-${appEnv}.svc.cluster.local
+        host: ${appName}-service.${namespace}-${appEnv}.svc.cluster.local
         port:
           number: ${appPort}

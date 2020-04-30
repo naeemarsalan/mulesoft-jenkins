@@ -2,7 +2,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: ${appName}-${appEnv}
+  name: ${appName}
   namespace: ${namespace}-${appEnv}
 spec:
   progressDeadlineSeconds: 600
@@ -13,10 +13,10 @@ spec:
   template:
     metadata:
       labels:
-        app: ${appName}-${appEnv}
+        app: ${appName}
     spec:
       containers:
-      - name: ${appName}-${appEnv}
+      - name: ${appName}
         image: ${dockerRegistryUrl}/${appName}/${appEnv}:${appVersion}
         imagePullPolicy: Always
         ports:
@@ -32,14 +32,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ${appName}-${appEnv}-service
+  name: ${appName}-service
   namespace: ${namespace}-${appEnv}
 spec:
   ports:
-  - name: ${appName}-${appEnv}
+  - name: ${appName}
     port: ${appPort}
     protocol: TCP
     targetPort: ${appPort}
   selector:
-    app: ${appName}-${appEnv}
+    app: ${appName}
   type: ClusterIP
