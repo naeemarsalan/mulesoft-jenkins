@@ -2,7 +2,7 @@
     - "${appName}-${appEnv}.kube.cloudapps.ms3-inc.com"
     port:
       number: 80
-      name: ${appName}-http
+      name: ${appName}-${appEnv}-http
       protocol: HTTP
     tls:
       httpsRedirect: true
@@ -10,7 +10,7 @@
     - "${appName}-${appEnv}.kube.cloudapps.ms3-inc.com"
     port:
       number: 443
-      name: ${appName}-https
+      name: ${appName}-${appEnv}-https
       protocol: HTTPS
     tls:
       mode: SIMPLE

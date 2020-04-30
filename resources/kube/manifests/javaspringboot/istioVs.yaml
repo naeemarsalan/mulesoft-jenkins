@@ -5,12 +5,12 @@ metadata:
   namespace: istio-system
 spec:
   hosts:
-  - "${appName}-${appEnv}.kube.cloudappNames.ms3-inc.com"
+  - "${appName}-${appEnv}.kube.cloudapps.ms3-inc.com"
   gateways:
   - ${appName}-${appEnv}-gateway
   http:
   - route:
     - destination:
-        host: ${appName}-service.java-springboot-apps.svc.cluster.local
+        host: ${appName}-${appEnv}-service.${namespace}-${appEnv}.svc.cluster.local
         port:
           number: ${appPort}

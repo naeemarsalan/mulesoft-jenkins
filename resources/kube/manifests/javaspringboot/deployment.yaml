@@ -12,11 +12,11 @@ spec:
   template:
     metadata:
       labels:
-        app: ${appName}
+        app: ${appName}-${appEnv}
     spec:
       containers:
       - name: ${appName}-${appEnv}
-        image: ${dockerRegistryUrl}/${appName}/${appEnv}:latest
+        image: ${dockerRegistryUrl}/${appName}/${appEnv}:${version}
         imagePullPolicy: Always
         ports:
         - containerPort: ${appPort}
@@ -40,5 +40,5 @@ spec:
     protocol: TCP
     targetPort: ${appPort}
   selector:
-    app: ${appName}
+    app: ${appName}-${appEnv}
   type: ClusterIP

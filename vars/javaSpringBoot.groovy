@@ -6,6 +6,9 @@ def call(Map pipelineParams) {
         yaml libraryResource('kube/agents/dockerInDocker.yaml')
       }
     }
+    environment {
+      namespace = "java-springboot-apps"
+    }
     stages {
       stage('Test') {
         steps {
@@ -97,16 +100,20 @@ def call(Map pipelineParams) {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
         }
         steps {
-          container('jnlp') {
+          container('kubectl') {
             writeFile([file: '${appName}-deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
             writeFile([file: '${appName}-istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
             writeFile([file: '${appName}-istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
             sh """
-              envsubst < ${appName}-deployment.yaml
-              envsubst < ${appName}-istio-vs.yaml
-              envsubst < ${appName}-istio-gw.yaml
-              echo "These manifests should be deployed to k8s via PR from jenkins to k8s repo (DOPS-242). But for now the deployment is manual. TBD"
-              cat ${appname}*.yaml
+              envsubst < ${appName}-deployment.yaml | tee ${appName}-deployment.yaml 1>/dev/null
+              cat ${appName}-deployment.yaml
+              envsubst < ${appName}-istio-vs.yaml | tee ${appName}-istio-vs.yaml 1>/dev/null
+              cat ${appName}-istio-vs.yaml
+              envsubst < ${appName}-istio-gw.yaml | tee ${appName}-istio-gw.yaml 1>/dev/null
+              echo "This snippet should be added to k8s gateway configuration:"
+              cat ${appname}-istio-gw.yaml
+              # kubectl apply -f manifest/manifest-new.yaml
+              # kubectl delete pods -l app=${app} -n ${namespace}-${appEnv}
             """
           }
         }
