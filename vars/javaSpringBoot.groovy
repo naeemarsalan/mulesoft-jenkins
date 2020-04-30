@@ -102,8 +102,8 @@ def call(Map pipelineParams) {
         steps {
           container('kubectl') {
             writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
-            writeFile([file: 'istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
-            writeFile([file: 'istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
+            writeFile([file: 'istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
+            writeFile([file: 'istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
             sh """
               envsubst < deployment.yaml > ${appName}-deployment.yaml
               envsubst < istio-vs.yaml > ${appName}-istio-vs.yaml

@@ -25,7 +25,7 @@ spec:
           protocol: TCP
       dnsPolicy: ClusterFirst
       imagePullSecrets:
-      - name: regsecret1
+      - name: regsecret
       restartPolicy: Always
       schedulerName: default-scheduler
 ---
