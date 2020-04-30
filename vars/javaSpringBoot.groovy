@@ -101,25 +101,23 @@ def call(Map pipelineParams) {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
         }
         steps {
-          container('jnlp') {
+          container('kubectl') {
             
             // Debug
             script {
               pom = readMavenPom file: 'pom.xml'
               artifactName = readMavenPom().getArtifactId()
-              version = readMavenPom().getVersion()
+              appVersion = readMavenPom().getVersion()
               groupName = readMavenPom().getGroupId()
               if ( GIT_BRANCH =~ "develop")
-                appEnv = "dev"
+                env.appEnv = "dev"
               if ( GIT_BRANCH =~ "master")
-                appEnv = "prod"
+                env.appEnv = "prod"
               echo "${appEnv}"
               if ( appEnv =~ "dev")
-                version = "latest"
+                env.appVersion = "latest"
 
             // Make vars global
-            env.version = version
-            env.appEnv = appEnv
             }
 
             writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])

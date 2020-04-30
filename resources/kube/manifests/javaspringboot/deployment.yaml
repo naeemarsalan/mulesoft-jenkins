@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: ${appName}-${appEnv}
-        image: ${dockerRegistryUrl}/${appName}/${appEnv}:${version}
+        image: ${dockerRegistryUrl}/${appName}/${appEnv}:${appVersion}
         imagePullPolicy: Always
         ports:
         - containerPort: ${appPort}
