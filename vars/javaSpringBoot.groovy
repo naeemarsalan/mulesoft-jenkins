@@ -108,14 +108,11 @@ def call(Map pipelineParams) {
               envsubst < deployment.yaml > ${appName}-deployment.yaml
               envsubst < istio-vs.yaml > ${appName}-istio-vs.yaml
               envsubst < istio-gw.yaml > ${appName}-istio-gw.yaml
-              # Check vars substitution:
-              cat ${appName}-*.yaml
-            """
-/*
               kubectl apply -f ${appName}-deployment.yaml
               kubectl delete pods -l app=${appName} -n ${namespace}-${appEnv}
               kubectl apply -f ${appName}-istio-vs.yaml
-*/
+              cat ${appName}-istio-gw.yaml
+            """
           }
         }
       }
