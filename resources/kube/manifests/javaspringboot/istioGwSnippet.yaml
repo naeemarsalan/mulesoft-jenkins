@@ -1,3 +1,4 @@
+# This snippet should be added to the Istio Gateway configuration
   - hosts:
     - "${appName}-${appEnv}.kube.cloudapps.ms3-inc.com"
     port:
