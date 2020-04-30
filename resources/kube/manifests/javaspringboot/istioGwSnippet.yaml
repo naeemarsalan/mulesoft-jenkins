@@ -1,0 +1,18 @@
+# This snippet should be added to the Istio Gateway configuration
+  - hosts:
+    - "${appName}-${appEnv}.kube.cloudapps.ms3-inc.com"
+    port:
+      number: 80
+      name: ${appName}-${appEnv}-http
+      protocol: HTTP
+    tls:
+      httpsRedirect: true
+  - hosts:
+    - "${appName}-${appEnv}.kube.cloudapps.ms3-inc.com"
+    port:
+      number: 443
+      name: ${appName}-${appEnv}-https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: cloudapps-wildcard

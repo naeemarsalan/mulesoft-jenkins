@@ -1,0 +1,17 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ${appName}-${appEnv}-vs
+  namespace: istio-system
+spec:
+  hosts:
+  - "${appName}-${appEnv}.kube.cloudapps.ms3-inc.com"
+  gateways:
+  - ${appName}-${appEnv}-gateway
+  http:
+  - route:
+    - destination:
+        host: ${appName}-service.${namespace}-${appEnv}.svc.cluster.local
+        port:
+          number: ${appPort}
