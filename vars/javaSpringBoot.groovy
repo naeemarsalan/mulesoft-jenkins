@@ -123,7 +123,7 @@ def call(Map pipelineParams) {
             writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
             sh """
               printenv | sort
-              envsubst < deployment.yaml > tee ${appName}-deployment.yaml; cat ${appName}-deployment.yaml
+              envsubst < deployment.yaml > ${appName}-deployment.yaml; cat ${appName}-deployment.yaml
             """
 /*
             writeFile([file: 'istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
