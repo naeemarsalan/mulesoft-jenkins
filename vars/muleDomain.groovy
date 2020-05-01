@@ -4,7 +4,7 @@ def call(Map pipelineParams) {
   pipeline {
     agent {
       kubernetes {
-        yaml libraryResource('kubernetes.yaml')
+        yaml libraryResource('kube/agents/maven.yaml')
       }
     }
 

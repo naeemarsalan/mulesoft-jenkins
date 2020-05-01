@@ -20,4 +20,3 @@ spec:
     command: ['cat']
   imagePullSecrets:
     - name: nexus
-

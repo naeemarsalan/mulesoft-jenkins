@@ -43,11 +43,13 @@ def call(Map pipelineParams) {
         steps {
           container('maven') {
             script {
+              // Get the appName by the name of the repo
+              env.appName = sh(script:'basename ${GIT_URL} |sed "s/.git//"', returnStdout: true).trim()
+              echo "${appName}"
               // Read pom.xml and populate vars
-              pom = readMavenPom file: 'pom.xml'
-              artifactName = readMavenPom().getArtifactId()
+              env.artifactName = readMavenPom().getArtifactId()
               env.appVersion = readMavenPom().getVersion()
-              groupName = readMavenPom().getGroupId()
+              env.groupName = readMavenPom().getGroupId()
 
               // Environmnent depends on the branch
               if ( GIT_BRANCH =~ "develop")
@@ -79,7 +81,7 @@ def call(Map pipelineParams) {
             configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
               sh "cp '$MAVEN_SETTINGS_FILE' mavensettings.xml"
             }
-            // For dev application there should be only one image tag:latest
+            // For dev environment there should be only one image tag:latest
             script {
               if ( appEnv =~ "dev")
                 env.appVersion = "latest" 
@@ -101,18 +103,17 @@ def call(Map pipelineParams) {
         }
         steps {
           container('kubectl') {
+            withCredentials([file(credentialsId: 'k8s-east1', variable: 'FILE')]) {
+              sh 'mkdir -p ~/.kube && cp "$FILE" ~/.kube/config'
+            }
             writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/javaspringboot/deployment.yaml')])
-            writeFile([file: 'istio-gw.yaml', text: libraryResource('kube/manifests/javaspringboot/istioGwSnippet.yaml')])
-            writeFile([file: 'istio-vs.yaml', text: libraryResource('kube/manifests/javaspringboot/istioVs.yaml')])
             sh """
               envsubst < deployment.yaml > ${appName}-deployment.yaml
-              envsubst < istio-vs.yaml > ${appName}-istio-vs.yaml
-              envsubst < istio-gw.yaml > ${appName}-istio-gw.yaml
               kubectl apply -f ${appName}-deployment.yaml
               kubectl delete pods -l app=${appName} -n ${namespace}-${appEnv}
-              kubectl apply -f ${appName}-istio-vs.yaml
-              cat ${appName}-istio-gw.yaml
             """
+            echo "Application ${appName} has been deployed. It should be accessible now through Kong Proxy, by the following URL:"
+            echo "${appName}-service.${namespace}-${appEnv}.svc.cluster.local"
           }
         }
       }

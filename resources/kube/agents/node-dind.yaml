@@ -2,16 +2,9 @@ apiVersion: v1
 kind: Pod
 metadata:
   labels:
-    some-label: jenkins-dind
-  namespace: jenkins
+    some-label: sow-dind
 spec: 
   containers:
-  - name: maven
-    image: maven:3.6-alpine
-    securityContext:
-      privileged: true
-    tty: true 
-    command: ['cat']
   - name: dind
     image: docker:18.05-dind
     securityContext:
@@ -20,11 +13,17 @@ spec:
       - name: dind-storage
         mountPath: /var/lib/docker
   - name: kubectl
-    image: docker-public.kube.cloudapps.ms3-inc.com/kubectl/1.14.3
-    securityContext:
+    image: docker.kube.cloudapps.ms3-inc.com/kubectl/1.14.3
+    ecurityContext:
       privileged: true
     tty: true
     command: ['cat']
+  - name: node
+    image: node:11-alpine
+    ecurityContext:
+      privileged: true
+    tty: true
+    command: ['cat'] 
   volumes:
     - name: dind-storage
       emptyDir: {}

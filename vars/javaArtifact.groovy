@@ -4,7 +4,7 @@ def call(Map pipelineParams) {
   pipeline {
     agent {
       kubernetes {
-        yaml libraryResource('kubernetes.yaml')
+        yaml libraryResource('kube/agents/maven.yaml')
       }
     }
 
@@ -36,11 +36,10 @@ def call(Map pipelineParams) {
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 // populate pom variables
-                pom = readMavenPom file: 'pom.xml'
-                packaging = readMavenPom().getPackaging()
-                artifactName = readMavenPom().getArtifactId()
-                version = readMavenPom().getVersion()
-                groupName = readMavenPom().getGroupId()
+                env.packaging = readMavenPom().getPackaging()
+                env.artifactName = readMavenPom().getArtifactId()
+                env.version = readMavenPom().getVersion()
+                env.groupName = readMavenPom().getGroupId()
                 sh "mvn -s '$MAVEN_SETTINGS_FILE' clean package -DskipTests -Djar.finalName=${artifactName}-${version}-${packaging}"
               }
             }
