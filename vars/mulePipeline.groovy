@@ -4,7 +4,7 @@ def call(Map pipelineParams) {
   pipeline {
     agent {
       kubernetes {
-        yaml libraryResource('kubernetes.yaml')
+        yaml libraryResource('kube/agents/anypoint-cli.yaml')
       }
     }
 
@@ -77,19 +77,12 @@ def call(Map pipelineParams) {
           container('maven') {
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-                // populate pom variables
-                pom = readMavenPom file: 'pom.xml'
-                packaging = readMavenPom().getPackaging()
-                artifactName = readMavenPom().getArtifactId()
-                version = readMavenPom().getVersion()
-                groupName = readMavenPom().getGroupId()
-
-                // global env vars
+                // Populate global env vars
                 env.packaging = readMavenPom().getPackaging()
                 env.artifactName = readMavenPom().getArtifactId()
                 env.version = readMavenPom().getVersion()
                 env.groupName = readMavenPom().getGroupId()
-
+                // Upload to nexus, target repo depends on if the app's version is a snapshot or not
                 dir('target') {
                   if ("${version}" =~ "SNAPSHOT")
                     sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusSnapshotUrl} -Dfile=${artifactName}-${version}-${packaging}.jar -DuniqueVersion=false -Dclassifier=${packaging}"
@@ -107,7 +100,6 @@ def call(Map pipelineParams) {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
           expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
         }
-
         steps {
           container('anypoint-cli') {
             script {
@@ -124,7 +116,6 @@ def call(Map pipelineParams) {
           }
         }
       }
-
     }
   }
 }

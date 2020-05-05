@@ -4,7 +4,7 @@ def call(Map pipelineParams) {
   pipeline {
     agent {
       kubernetes {
-        yaml libraryResource('kubernetes.yaml')
+        yaml libraryResource('kube/agents/maven.yaml')
       }
     }
 
@@ -45,6 +45,7 @@ def call(Map pipelineParams) {
       stage('Build') {
         when {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+          expression { return readFile('pom.xml').contains('<packaging>mule-extension</packaging>') }
         }
         steps {
           container('maven') {
@@ -60,19 +61,13 @@ def call(Map pipelineParams) {
       stage('Upload to Nexus') {
         when {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+          expression { return readFile('pom.xml').contains('<packaging>mule-extension</packaging>') }
         }
         steps {
           container('maven') {
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-                // populate pom variables
-                pom = readMavenPom file: 'pom.xml'
-                packaging = "mule-plugin"
-                artifactName = readMavenPom().getArtifactId()
-                version = readMavenPom().getVersion()
-                groupName = readMavenPom().getGroupId()
-
-                // global env vars
+                // Populate global env vars
                 env.packaging = readMavenPom().getPackaging()
                 env.artifactName = readMavenPom().getArtifactId()
                 env.version = readMavenPom().getVersion()
@@ -89,8 +84,6 @@ def call(Map pipelineParams) {
           }
         }
       }
-
-      
     }
   }
 }
