@@ -31,7 +31,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ${appName}-service
+  name: ${appName}
   namespace: ${namespace}-${appEnv}
 spec:
   ports:
