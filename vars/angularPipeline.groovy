@@ -7,11 +7,12 @@ def call(Map pipelineParams) {
       }
     }
     stages {
-      stage('Test') {
+      stage('Linter') {
         steps {
           container('node') {
+            // the linter script itself should be added later, for now this stage is used to populate environment variables
             script {
-              // Get application's name (from git repo name), it's version from package.json, and populate appEnv var depending on git branch
+              // Get node application's name (from git repo name), it's version from package.json, and populate appEnv var depending on git branch
               env.appName = sh(script:'basename ${GIT_URL} |sed "s/.git//"', returnStdout: true).trim()
               if ( GIT_BRANCH ==~ /(.*master)/ ) {
                 env.appVersion = sh(script: '''node -p -e "require('./package.json').version"''', returnStdout: true).trim()
@@ -27,6 +28,18 @@ def call(Map pipelineParams) {
                 env.appEnv = "uat"
               }
             }
+          }
+        }
+      }
+
+      stage('Test') {
+        when {
+          // Tests are not run when deploying from master branch
+          expression { GIT_BRANCH != "master" }
+        }
+        steps {
+          container('node') {
+            script {
             // Run tests with coverage report
             sh """
               npm install
@@ -55,8 +68,8 @@ def call(Map pipelineParams) {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
-                docker build --build-arg configuration=${configuration} -t ${dockerRegistryUrl}/${appName}/${appEnv}:${appVersion} .
-                docker push ${dockerRegistryUrl}/${appName}/${appEnv}:${appVersion}
+                docker build --build-arg configuration=${configuration} -t ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion} .
+                docker push ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}
               """
             }
           }
@@ -75,8 +88,9 @@ def call(Map pipelineParams) {
             writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/angular/deployment.yaml')])
             sh """
               envsubst < deployment.yaml > ${appName}-deployment.yaml
-              kubectl apply -f ${appName}-deployment.yaml
-              kubectl delete pods -l app=${appName} -n ${namespace}-${appEnv}
+              cat ${appName}-deployment.yaml
+#              kubectl apply -f ${appName}-deployment.yaml
+#              kubectl delete pods -l app=${appName} -n ${projectName}-${appEnv}
             """
           }
         }

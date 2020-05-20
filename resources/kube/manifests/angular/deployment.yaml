@@ -2,7 +2,10 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: ${appName}
-  namespace: ${namespace}-${appEnv}
+  namespace: ${projectName}-${appEnv}
+  annotations:
+    fluxcd.io/automated: "true"
+    fluxcd.io/tag.${appName}: regex:${appEnv}-${appVersion}
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -16,7 +19,7 @@ spec:
     spec:
       containers:
       - name: ${appName}
-        image: ${dockerRegistryUrl}/${appName}/${appEnv}:${appVersion}
+        image: ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}
         imagePullPolicy: Always
         ports:
         - containerPort: 80
@@ -32,7 +35,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ${appName}
-  namespace: ${namespace}-${appEnv}
+  namespace: ${projectName}-${appEnv}
 spec:
   ports:
   - name: http
