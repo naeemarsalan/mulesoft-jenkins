@@ -40,20 +40,21 @@ def call(Map pipelineParams) {
         steps {
           container('node') {
             script {
-            // Run tests with coverage report
-            sh """
-              npm install
-              npm run test-coverage
-              ls -lsa
-            """
-            publishHTML (target: [
-              allowMissing: false,
-              alwaysLinkToLastBuild: false,
-              keepAll: true,
-              reportDir: 'coverage/lcov-report',
-              reportFiles: 'index.html',
-              reportName: "Coverage Report"
-            ])
+              // Run tests with coverage report
+              sh """
+                npm install
+                npm run test-coverage
+                ls -lsa
+              """
+              publishHTML (target: [
+                allowMissing: false,
+                alwaysLinkToLastBuild: false,
+                keepAll: true,
+                reportDir: 'coverage/lcov-report',
+                reportFiles: 'index.html',
+                reportName: "Coverage Report"
+              ])
+            }
           }
         }
       }
