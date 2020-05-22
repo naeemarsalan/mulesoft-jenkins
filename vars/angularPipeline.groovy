@@ -14,7 +14,6 @@ def call(Map pipelineParams) {
             script {
               // Get node application's name (from git repo name), it's version from package.json, and populate appEnv var depending on git branch
               env.appName = sh(script:'basename ${GIT_URL} |sed "s/.git//"', returnStdout: true).trim()
-              sh "git rev-parse HEAD > gitid"
               if ( GIT_BRANCH ==~ /(.*master)/ ) {
                 env.appVersion = sh(script: '''node -p -e "require('./package.json').version"''', returnStdout: true).trim()
                 env.appEnv = "prod"
