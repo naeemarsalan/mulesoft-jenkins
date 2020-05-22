@@ -33,6 +33,16 @@ def call(Map pipelineParams) {
         }
       }
 
+      stage('Get GIT ID') {
+        steps {
+          container('jnlp') {
+            script {
+              sh "git rev-parse HEAD > gitid"
+            }
+          }
+        }
+      }
+
       stage('Test') {
         when {
           // Tests are not run when deploying from master branch
