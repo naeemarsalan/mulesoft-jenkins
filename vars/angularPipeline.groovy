@@ -1,3 +1,7 @@
+def msgColorMap = [
+    'SUCCESS': 'good',
+    'FAILURE': 'danger',
+]
 def call(Map pipelineParams) {
 
   pipeline {
@@ -94,6 +98,15 @@ def call(Map pipelineParams) {
           }
         }
       }
+    }
+  }
+  post {
+    always {
+      script {
+        slackSend(
+          color: msgColorMap[currentBuild.currentResult],
+          message: "*${currentBuild.currentResult}:* Job ${JOB_NAME} build ${BUILD_NUMBER}\n More info at: ${env.BUILD_URL}")
+        }
     }
   }
 }
