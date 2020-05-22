@@ -13,11 +13,11 @@ def call(Map pipelineParams) {
             // the linter script itself should be added later, for now this stage is used to populate environment variables
             script {
               // Get node application's name (from git repo name)
-              env.appName = sh(script:'basename ${GIT_URL} |sed "s/.git//"', returnStdout: true).trim()
+              env.appName = sh(script: 'basename ${GIT_URL} |sed "s/.git//"', returnStdout: true).trim()
               // Get application version from package.json
               env.appVersion = sh(script: '''node -p -e "require('./package.json').version"''', returnStdout: true).trim()
               // get latest git commit ID
-              env.gitId = sh(script:'basename ${GIT_COMMIT} | cut -c1-7', returnStdout: true).trim()
+              env.gitId = sh(script: 'echo ${GIT_COMMIT} | cut -c1-7', returnStdout: true).trim()
               // Set application environment variable depending on git branch
               if ( GIT_BRANCH ==~ /(.*master)/ ) {
                 env.appEnv = "prod"
@@ -85,15 +85,11 @@ def call(Map pipelineParams) {
         }
         steps {
           container('kubectl') {
-            withCredentials([file(credentialsId: 'k8s-east1', variable: 'FILE')]) {
-              sh 'mkdir -p ~/.kube && cp "$FILE" ~/.kube/config'
-            }
             writeFile([file: 'deployment.yaml', text: libraryResource('kube/manifests/angular/deployment.yaml')])
             sh """
               envsubst < deployment.yaml > ${appName}-deployment.yaml
+              echo "The following manifest should be added to the k8s repo manually, as ./namespaces/${projectName}-${appEnv}/${appName}.yaml"
               cat ${appName}-deployment.yaml
-#              kubectl apply -f ${appName}-deployment.yaml
-#              kubectl delete pods -l app=${appName} -n ${projectName}-${appEnv}
             """
           }
         }

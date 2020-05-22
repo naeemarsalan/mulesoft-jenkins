@@ -5,7 +5,7 @@ metadata:
   namespace: ${projectName}-${appEnv}
   annotations:
     fluxcd.io/automated: "true"
-    fluxcd.io/tag.${appName}: regex:${appEnv}-${appVersion}
+    fluxcd.io/tag.${appName}: regex:^${appEnv}-.*
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: ${appName}
-        image: ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}
+        image: ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
