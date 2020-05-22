@@ -96,9 +96,22 @@ def call(Map pipelineParams) {
             }
           }
         }
-      }
-
-      
+      }  
     }
+
+    post {
+      always {
+        script {
+          if ( currentBuild.currentResult == "SUCCESS")
+            env.msgColor = "good"
+          else 
+            env.msgColor = "danger"
+          slackSend(
+            color: msgColor,
+            message: "*${currentBuild.currentResult}:* Job ${JOB_NAME} build ${BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
+            )
+        }
+      }
+    }    
   }
 }
