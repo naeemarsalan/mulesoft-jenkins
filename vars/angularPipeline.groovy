@@ -12,31 +12,22 @@ def call(Map pipelineParams) {
           container('node') {
             // the linter script itself should be added later, for now this stage is used to populate environment variables
             script {
-              // Get node application's name (from git repo name), it's version from package.json, and populate appEnv var depending on git branch
+              // Get node application's name (from git repo name)
               env.appName = sh(script:'basename ${GIT_URL} |sed "s/.git//"', returnStdout: true).trim()
+              // Get application version from package.json
+              env.appVersion = sh(script: '''node -p -e "require('./package.json').version"''', returnStdout: true).trim()
+              // get latest git commit ID
+              env.gitId = sh(script:'basename ${GIT_COMMIT} | cut -c1-7', returnStdout: true).trim()
+              // Set application environment variable depending on git branch
               if ( GIT_BRANCH ==~ /(.*master)/ ) {
-                env.appVersion = sh(script: '''node -p -e "require('./package.json').version"''', returnStdout: true).trim()
                 env.appEnv = "prod"
               }
-              // For dev and uat environments there should be only one image tag:latest
               if ( GIT_BRANCH ==~ /(.*develop)/ ) {
-                env.appVersion = "latest"
                 env.appEnv = "dev"
               }
               if ( GIT_BRANCH ==~ /(.*uat)/ ) {
-                env.appVersion = "latest"
                 env.appEnv = "uat"
               }
-            }
-          }
-        }
-      }
-
-      stage('Get GIT ID') {
-        steps {
-          container('jnlp') {
-            script {
-              sh "git rev-parse HEAD > gitid"
             }
           }
         }
@@ -79,8 +70,9 @@ def call(Map pipelineParams) {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
-                docker build --build-arg configuration=${configuration} -t ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}-\$(cat gitid | cut -c1-7) .
-                docker push ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}-\$(cat gitid | cut -c1-7)
+                docker build --build-arg configuration=${configuration} -t ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}-${gitId} -t ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-latest .
+                docker push ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}-${gitId}
+                docker push ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-latest
               """
             }
           }
