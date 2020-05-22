@@ -49,7 +49,7 @@ def call(Map pipelineParams) {
         }
       }
     }
-/*
+
     post {
       always {
         script {
@@ -64,6 +64,5 @@ def call(Map pipelineParams) {
         }
       }
     }
-*/
   }
 }
