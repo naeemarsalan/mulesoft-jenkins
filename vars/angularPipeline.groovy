@@ -17,7 +17,7 @@ def call(Map pipelineParams) {
               // Get application version from package.json
               env.appVersion = sh(script: '''node -p -e "require('./package.json').version"''', returnStdout: true).trim()
               // get latest git commit ID
-              env.gitId = sh(script: 'echo ${GIT_COMMIT} | cut -c1-7', returnStdout: true).trim()
+              env.gitCommitId = sh(script: 'echo ${GIT_COMMIT} | cut -c1-7', returnStdout: true).trim()
               // Set application environment variable depending on git branch
               if ( GIT_BRANCH ==~ /(.*master)/ ) {
                 env.appEnv = "prod"
@@ -70,8 +70,8 @@ def call(Map pipelineParams) {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
-                docker build --build-arg configuration=${configuration} -t ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}-${gitId} -t ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-latest .
-                docker push ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}-${gitId}
+                docker build --build-arg configuration=${configuration} -t ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}-${gitCommitId} -t ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-latest .
+                docker push ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-${appVersion}-${gitCommitId}
                 docker push ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-latest
               """
             }
