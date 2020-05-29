@@ -34,11 +34,12 @@ def call(Map pipelineParams) {
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 if (env.maven_env == "prod") {
-                  env.credsid = "prodoptions"
+                  credsid = "prodoptions"
                 } else {
-                  env.credsid = "devoptions"
+                  credsid = "devoptions"
                 }
-                withCredentials([usernamePassword(credentialsId: "${env.credsid}", passwordVariable: 'appkey', usernameVariable: 'appenv')]) {
+                echo credsid
+                withCredentials([usernamePassword(credentialsId: "$credsid", passwordVariable: 'appkey', usernameVariable: 'appenv')]) {
                   if (env.maven_env) {
                     sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${maven_env} -Dapp.key=${appkey}"
                   } else {
