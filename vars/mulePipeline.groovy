@@ -38,8 +38,7 @@ def call(Map pipelineParams) {
                 } else {
                   credsid = "devoptions"
                 }
-                echo credsid
-                withCredentials([usernamePassword(credentialsId: $credsid, passwordVariable: 'appkey', usernameVariable: 'appenv')]) {
+                withCredentials([usernamePassword(credentialsId: credsid, passwordVariable: 'appkey', usernameVariable: 'appenv')]) {
                   if (env.maven_env) {
                     sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${maven_env} -Dapp.key=${appkey}"
                   } else {
