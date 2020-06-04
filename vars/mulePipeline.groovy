@@ -7,6 +7,9 @@ def call(Map pipelineParams) {
         yaml libraryResource('kube/agents/anypoint-cli.yaml')
       }
     }
+    parameters {
+      booleanParam(name: 'skipCI', defaultValue: false, description: 'Skip CI part, and deploy a previously built artifact of the same version from Nexus repository.')
+    }
 
     stages {
 
@@ -15,9 +18,29 @@ def call(Map pipelineParams) {
           expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
         }
         steps {
-          container('maven') {
+          container('jnlp') {
             script {
-              def scriptContent = libraryResource "ms3-mule-linter.sh"
+              // Populate env vars from pom.xml file
+              env.packaging = readMavenPom().getPackaging()
+              env.artifactName = readMavenPom().getArtifactId()
+              env.version = readMavenPom().getVersion()
+              env.groupName = readMavenPom().getGroupId()
+              // Target Nexus repository depends on if the app's version is a snapshot or not
+              if ("${version}" =~ "SNAPSHOT") {
+                nexusUrl = nexusSnapshotUrl
+              } else {
+                  nexusUrl = nexusReleaseUrl
+                }
+              // Verify if skipping of CI part and deployment directly from Nexus repository is set to true
+              echo "skipCI: ${params.skipCI}"
+              if (params.skipCI == true) {
+                echo "Skipping CI part, going to deploy a previously built artifact from Nexus..."
+                scriptContent = libraryResource "scripts/download-from-nexus.sh"
+                writeFile file: 'download-from-nexus.sh', text: scriptContent
+                sh "bash download-from-nexus.sh"
+              }
+              // Run linter script
+              scriptContent = libraryResource "scripts/ms3-mule-linter.sh"
               writeFile file: 'ms3-mule-linter.sh', text: scriptContent
               sh "bash ms3-mule-linter.sh"
             }
@@ -28,6 +51,7 @@ def call(Map pipelineParams) {
       stage('Test') {
         when {
           expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
+          expression { params.skipCI == false }
         }
         steps {
           container('maven') {
@@ -62,6 +86,7 @@ def call(Map pipelineParams) {
       stage('Build') {
         when {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+          expression { params.skipCI == false }
         }
         steps {
           container('maven') {
@@ -77,22 +102,15 @@ def call(Map pipelineParams) {
       stage('Upload to Nexus') {
         when {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+          expression { params.skipCI == false }
         }
         steps {
           container('maven') {
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-                // Populate global env vars
-                env.packaging = readMavenPom().getPackaging()
-                env.artifactName = readMavenPom().getArtifactId()
-                env.version = readMavenPom().getVersion()
-                env.groupName = readMavenPom().getGroupId()
-                // Upload to nexus, target repo depends on if the app's version is a snapshot or not
+                echo "Artifact is being uploaded to: ${nexusUrl}"
                 dir('target') {
-                  if ("${version}" =~ "SNAPSHOT")
-                    sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusSnapshotUrl} -Dfile=${artifactName}-${version}-${packaging}.jar -DuniqueVersion=false -Dclassifier=${packaging}"
-                  else
-                    sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusReleaseUrl} -Dfile=${artifactName}-${version}-${packaging}.jar -DuniqueVersion=false -Dclassifier=${packaging}"
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusUrl} -Dfile=${artifactName}-${version}-${packaging}.jar -DuniqueVersion=false -Dclassifier=${packaging}"
                 }
               }
             }
