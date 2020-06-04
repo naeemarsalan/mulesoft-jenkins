@@ -17,8 +17,19 @@ def call(Map pipelineParams) {
         steps {
           container('maven') {
             script {
-              def scriptContent = libraryResource "ms3-mule-domain-linter.sh"
-              writeFile file: 'ms3-mule-domain-linter.sh', text: scriptContent
+              // Populate env vars from pom.xml file
+              env.packaging = readMavenPom().getPackaging()
+              env.artifactName = readMavenPom().getArtifactId()
+              env.version = readMavenPom().getVersion()
+              env.groupName = readMavenPom().getGroupId()
+              // Target Nexus repository depends on if the app's version is a snapshot or not
+              if ("${version}" =~ "SNAPSHOT") {
+                nexusUrl = nexusSnapshotUrl
+              } else {
+                  nexusUrl = nexusReleaseUrl
+                }
+              // Run linter script
+              writeFile([file: 'ms3-mule-domain-linter.sh', text: libraryResource('scripts/ms3-mule-domain-linter.sh')])
               sh "bash ms3-mule-domain-linter.sh"
             }
           }
@@ -65,24 +76,8 @@ def call(Map pipelineParams) {
           container('maven') {
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-                // populate pom variables
-                pom = readMavenPom file: 'pom.xml'
-                packaging = readMavenPom().getPackaging()
-                artifactName = readMavenPom().getArtifactId()
-                version = readMavenPom().getVersion()
-                groupName = readMavenPom().getGroupId()
-
-                // global env vars
-                env.packaging = readMavenPom().getPackaging()
-                env.artifactName = readMavenPom().getArtifactId()
-                env.version = readMavenPom().getVersion()
-                env.groupName = readMavenPom().getGroupId()
-
                 dir('target') {
-                  if ("${version}" =~ "SNAPSHOT")
-                    sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusSnapshotUrl} -Dfile=${artifactName}-${version}-${packaging}.jar -DuniqueVersion=false -Dclassifier=${packaging}"
-                  else
-                    sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusReleaseUrl} -Dfile=${artifactName}-${version}-${packaging}.jar -DuniqueVersion=false -Dclassifier=${packaging}"
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' deploy:deploy-file -DgroupId=${groupName} -DartifactId=${artifactName} -Dversion=${version} -DgeneratePom=true -Dpackaging=jar -DrepositoryId=nexus -Durl=${nexusUrl} -Dfile=${artifactName}-${version}-${packaging}.jar -DuniqueVersion=false -Dclassifier=${packaging}"
                 }
               }
             }
