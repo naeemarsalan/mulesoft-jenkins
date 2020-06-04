@@ -35,13 +35,11 @@ def call(Map pipelineParams) {
               echo "skipCI: ${params.skipCI}"
               if (params.skipCI == true) {
                 echo "Skipping CI part, going to deploy a previously built artifact from Nexus..."
-                scriptContent = libraryResource "scripts/download-from-nexus.sh"
-                writeFile file: 'download-from-nexus.sh', text: scriptContent
+                writeFile([file: 'download-from-nexus.sh', text: libraryResource('scripts/download-from-nexus.sh')])
                 sh "bash download-from-nexus.sh"
               }
               // Run linter script
-              scriptContent = libraryResource "scripts/ms3-mule-linter.sh"
-              writeFile file: 'ms3-mule-linter.sh', text: scriptContent
+              writeFile([file: 'ms3-mule-linter.sh', text: libraryResource('scripts/ms3-mule-linter.sh')])
               sh "bash ms3-mule-linter.sh"
             }
           }
