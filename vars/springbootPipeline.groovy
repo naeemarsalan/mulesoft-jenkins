@@ -55,9 +55,7 @@ def call(Map pipelineParams) {
           container("${mvnContainerName}") {
             script{
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-                withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'devenv')]) {
-                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test"
-                }
+                sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test"
               }
             } 
           }
