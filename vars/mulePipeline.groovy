@@ -27,10 +27,10 @@ def call(Map pipelineParams) {
               env.groupName = readMavenPom().getGroupId()
               // Target Nexus repository depends on if the app's version is a snapshot or not
               if ("${version}" =~ "SNAPSHOT") {
-                nexusUrl = nexusSnapshotUrl
+                env.nexusUrl = nexusSnapshotUrl
               } else {
-                  nexusUrl = nexusReleaseUrl
-                }
+                env.nexusUrl = nexusReleaseUrl
+              }
               // Verify if skipping of CI part and deployment directly from Nexus repository is set to true
               echo "skipCI: ${params.skipCI}"
               if (params.skipCI == true) {
@@ -134,6 +134,23 @@ def call(Map pipelineParams) {
                 }
               }
             }
+          }
+        }
+      }
+
+      stage('Add version tag') {
+        when {
+          expression { GIT_BRANCH == "master" }
+        }
+        steps {
+           sshagent(["bitbucket to jenkins"]) {
+            sh """
+              mkdir -p ~/.ssh && ssh-keyscan -t rsa bitbucket.org >> ~/.ssh/known_hosts
+              git config --global user.email "jenkins@ms3-inc.com"
+              git config --global user.name "MS3 Jenkins"
+              git tag v${version}
+              git push origin --tags
+            """
           }
         }
       }

@@ -1,0 +1,106 @@
+{
+  "rendered": {
+    "description": {
+      "raw": "",
+      "markup": "markdown",
+      "html": "",
+      "type": "rendered"
+    },
+    "title": {
+      "raw": "${commitMessage}",
+      "markup": "markdown",
+      "html": "<p>${commitMessage}</p>",
+      "type": "rendered"
+    }
+  },
+  "type": "pullrequest",
+  "description": "",
+  "title": "${commitMessage}",
+  "close_source_branch": true,
+  "reviewers": [
+    {
+      "display_name": "Mohammad Naeem",
+      "uuid": "{1332b350-2d23-4c5e-8f66-5a629d826ea2}",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/users/%7B1332b350-2d23-4c5e-8f66-5a629d826ea2%7D"
+        },
+        "html": {
+          "href": "https://bitbucket.org/%7B1332b350-2d23-4c5e-8f66-5a629d826ea2%7D/"
+        },
+        "avatar": {
+          "href": "https://secure.gravatar.com/avatar/197c5f3f1b80c3e8d1481db1b8c675a7?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMN-1.png"
+        }
+      },
+      "nickname": "Mohammad Naeem",
+      "type": "user",
+      "account_id": "5cc5afb2a6e4950feacb55bf"
+    }
+  ],
+  "destination": {
+    "commit": {
+      "hash": "${targetBrCommitId}",
+      "type": "commit",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/${targetRepoOwner}/${targetRepoName}/commit/${targetBrCommitId}"
+        },
+        "html": {
+          "href": "https://bitbucket.org/${targetRepoOwner}/${targetRepoName}/commits/${targetBrCommitId}"
+        }
+      }
+    },
+    "repository": {
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/${targetRepoOwner}/${targetRepoName}"
+        },
+        "html": {
+          "href": "https://bitbucket.org/${targetRepoOwner}/${targetRepoName}"
+        },
+        "avatar": {
+          "href": "https://bytebucket.org/ravatar/%7B${targetRepoUuid}%7D?ts=default"
+        }
+      },
+      "type": "repository",
+      "name": "${targetRepoName}",
+      "full_name": "${targetRepoOwner}/${targetRepoName}",
+      "uuid": "{${targetRepoUuid}}"
+    },
+    "branch": {
+      "name": "${targetBranch}"
+    }
+  },
+  "source": {
+    "commit": {
+      "hash": "${featureBrCommitId}",
+      "type": "commit",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/${targetRepoOwner}/${targetRepoName}/commit/${featureBrCommitId}"
+        },
+        "html": {
+          "href": "https://bitbucket.org/${targetRepoOwner}/${targetRepoName}/commits/${featureBrCommitId}"
+        }
+      }
+    },
+    "repository": {
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/${targetRepoOwner}/${targetRepoName}"
+        },
+        "html": {
+          "href": "https://bitbucket.org/${targetRepoOwner}/${targetRepoName}"
+        }
+      },
+      "type": "repository",
+      "name": "${targetRepoName}",
+      "full_name": "${targetRepoOwner}/${targetRepoName}",
+      "uuid": "{${targetRepoUuid}}"
+    },
+    "branch": {
+      "name": "${featureBranch}"
+    }
+  },
+  "state": "OPEN"
+}

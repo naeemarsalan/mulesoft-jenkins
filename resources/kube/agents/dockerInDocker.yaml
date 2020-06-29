@@ -12,6 +12,12 @@ spec:
       privileged: true
     tty: true 
     command: ['cat']
+  - name: maven-jdk-14
+    image: maven:3.6-openjdk-14-slim
+    securityContext:
+      privileged: true
+    tty: true 
+    command: ['cat']
   - name: dind
     image: docker:18.05-dind
     securityContext:
@@ -23,6 +29,10 @@ spec:
     image: docker-public.kube.cloudapps.ms3-inc.com/kubectl/1.14.3
     securityContext:
       privileged: true
+    tty: true
+    command: ['cat']
+  - name: git-in-docker
+    image: docker-public.kube.cloudapps.ms3-inc.com/cicd-tools/git-in-docker:dev-8fbe659
     tty: true
     command: ['cat']
   volumes:

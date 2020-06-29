@@ -17,7 +17,7 @@ spec:
     matchLabels:
       app: ${appName}
   strategy:
-      type: Recreate
+    type: Recreate
   template:
     metadata:
       labels:
