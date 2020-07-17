@@ -23,7 +23,14 @@ spec:
     ecurityContext:
       privileged: true
     tty: true
-    command: ['cat'] 
+    command: ['cat']
+  resources:
+    limits:
+      cpu: "1"
+      memory: 1024Mi
+    requests:
+      cpu: 50m
+      memory: 256Mi
   volumes:
     - name: dind-storage
       emptyDir: {}
