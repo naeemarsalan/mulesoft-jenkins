@@ -113,7 +113,7 @@ def call(Map pipelineParams) {
         }
       }
 
-      stage('Deploy to k8s') {
+      stage('Generate App Manifest') {
         when {
           expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
           expression { targetRepoName != null }

@@ -12,36 +12,55 @@ def call(Map pipelineParams) {
     }
 
     stages {
-
-      stage('Linter') {
-        when {
-          expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
-        }
+      stage('Prepare Env For Build') {
         steps {
-          container('jnlp') {
-            script {
-              // Populate env vars from pom.xml file
+          script {
+            // Bitbucket Push and Pull Request Plugin provides this variable containing the branch that triggered this build
+            // In very rare circumstances it happens to be null when job is triggered manually, in that case assign to it value of default $GIT_BRANCH variable
+              if (env.BITBUCKET_SOURCE_BRANCH == null) { 
+                env.BITBUCKET_SOURCE_BRANCH = sh(script: "echo $GIT_BRANCH | grep -oP '(?<=origin/).*'", returnStdout: true).trim()
+              }
+            // Checkout provided branch 
+              echo "Now checking out source branch: ${BITBUCKET_SOURCE_BRANCH}"
+              git (url: "${GIT_URL}",
+              credentialsId: "${serviceAccount}-bitbucket-ssh-key",
+              branch: "${BITBUCKET_SOURCE_BRANCH}")
+            // Notify BitBucket that a build was started
+              env.repoName = sh(script: 'basename $GIT_URL | sed "s/.git//"', returnStdout: true).trim()
+              env.gitCommitID = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+              bitbucketStatusNotify(buildState: 'INPROGRESS', repoSlug: "${repoName}", commitId: "${gitCommitID}")
+            // Populate env vars from pom.xml file
               env.packaging = readMavenPom().getPackaging()
               env.artifactName = readMavenPom().getArtifactId()
               env.version = readMavenPom().getVersion()
               env.groupName = readMavenPom().getGroupId()
-              // Target Nexus repository depends on if the app's version is a snapshot or not
+            // Target Nexus repository depends on if the app's version is a snapshot or not
               if ("${version}" =~ "SNAPSHOT") {
                 env.nexusUrl = nexusSnapshotUrl
               } else {
                 env.nexusUrl = nexusReleaseUrl
               }
-              // Verify if skipping of CI part and deployment directly from Nexus repository is set to true
+            // Verify if skipping of CI part and deployment directly from Nexus repository is set to true
               echo "skipCI: ${params.skipCI}"
               if (params.skipCI == true) {
                 echo "Skipping CI part, going to deploy a previously built artifact from Nexus..."
                 writeFile([file: 'download-from-nexus.sh', text: libraryResource('scripts/download-from-nexus.sh')])
                 sh "bash download-from-nexus.sh"
               }
-              // Run linter script
-              writeFile([file: 'ms3-mule-linter.sh', text: libraryResource('scripts/ms3-mule-linter.sh')])
-              sh "bash ms3-mule-linter.sh"
-            }
+          }
+        }
+      }
+
+      stage('Linter') {
+        when {
+          expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
+          expression { params.skipCI == false }
+        }
+        steps {
+          script {
+            // Run linter script
+            writeFile([file: 'ms3-mule-linter.sh', text: libraryResource('scripts/ms3-mule-linter.sh')])
+            sh "bash ms3-mule-linter.sh"
           }
         }
       }
@@ -54,6 +73,7 @@ def call(Map pipelineParams) {
         steps {
           container('maven') {
             script {
+              echo "Running tests against branch: ${BITBUCKET_SOURCE_BRANCH}, env: ${maven_env}"
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 if (env.maven_env == "prod") {
                   credsid = "prodoptions"
@@ -83,12 +103,13 @@ def call(Map pipelineParams) {
 
       stage('Build') {
         when {
-          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+          expression { BITBUCKET_SOURCE_BRANCH ==~ /(master|develop)/ }
           expression { params.skipCI == false }
         }
         steps {
           container('maven') {
             script {
+              echo "Building..."
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 sh "mvn -s '$MAVEN_SETTINGS_FILE' clean package -DskipTests"
               }
@@ -99,12 +120,13 @@ def call(Map pipelineParams) {
 
       stage('Upload to Nexus') {
         when {
-          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+          expression { BITBUCKET_SOURCE_BRANCH ==~ /(master|develop)/ }
           expression { params.skipCI == false }
         }
         steps {
           container('maven') {
             script {
+              echo "Uploading..."
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 echo "Artifact is being uploaded to: ${nexusUrl}"
                 dir('target') {
@@ -118,12 +140,13 @@ def call(Map pipelineParams) {
 
       stage('Deploy to Anypoint') {
         when {
-          expression { GIT_BRANCH ==~ /(.*master|.*develop)/ }
+          expression { BITBUCKET_SOURCE_BRANCH ==~ /(master|develop)/ }
           expression { return readFile('pom.xml').contains('<packaging>mule-application</packaging>') }
         }
         steps {
           container('anypoint-cli') {
             script {
+              echo "Deploying..."
               withCredentials([usernamePassword(credentialsId: 'anypointplatform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')]) {
                 dir('target') {
                   ApplicationList = sh (returnStdout: true, script: 'anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application list -f Name --limit 1000')
@@ -140,10 +163,11 @@ def call(Map pipelineParams) {
 
       stage('Add version tag') {
         when {
-          expression { GIT_BRANCH == "master" }
+          expression { BITBUCKET_SOURCE_BRANCH == "master" }
+          expression { params.skipCI == false }
         }
         steps {
-           sshagent(["bitbucket to jenkins"]) {
+           sshagent(["${serviceAccount}-bitbucket-ssh-key"]) {
             sh """
               mkdir -p ~/.ssh && ssh-keyscan -t rsa bitbucket.org >> ~/.ssh/known_hosts
               git config --global user.email "jenkins@ms3-inc.com"
@@ -156,9 +180,30 @@ def call(Map pipelineParams) {
       }
     }
 
+    // POST-BUILD NOTIFICATIONS AND INTEGRATIONS
     post {
+      success {
+        bitbucketStatusNotify(buildState: 'SUCCESSFUL', repoSlug: "${repoName}", commitId: "${gitCommitID}")
+      }
+      failure {
+        bitbucketStatusNotify(buildState: 'FAILED', repoSlug: "${repoName}", commitId: "${gitCommitID}")
+      }
       always {
         script {
+          //Check if webhook exists in BitBucket and add it if it doesn't exist
+          env.workSpaceBB = sh(script: "echo $GIT_URL | awk '\$0=\$2' FS=: RS=\\/", returnStdout: true).trim()
+          echo "BB workspace: ${workSpaceBB}"
+          withCredentials([string(credentialsId: "${serviceAccount}-bitbucket-app-pass", variable: "serviceAccountAppPass")]) {
+            writeFile([file: 'create-bb-webhook.sh', text: libraryResource('scripts/create-bb-webhook.sh')])
+            sh "bash create-bb-webhook.sh"
+            //add a comment to Pull Request if this is a PR, using the same credentials
+            if (env.BITBUCKET_PULL_REQUEST_ID != null) {
+              env.commentBody = "Build [#${BUILD_NUMBER}](${BUILD_URL}) with result: ${currentBuild.currentResult}  \\n[Tests coverage report](${JOB_URL}Coverage_20Report/)  \\nPlease check [linter script output](${BUILD_URL}execution/node/40/log/)"
+              writeFile([file: 'create-pr-comment.sh', text: libraryResource('scripts/create-pr-comment.sh')])
+              sh "bash create-pr-comment.sh"
+            }
+          }
+          // Post a notification in Slack channel
           if ( currentBuild.currentResult == "SUCCESS")
             env.msgColor = "good"
           else 
