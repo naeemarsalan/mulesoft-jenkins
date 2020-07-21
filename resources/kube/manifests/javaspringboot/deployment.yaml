@@ -31,6 +31,13 @@ spec:
         - containerPort: ${appPort}
           name: http
           protocol: TCP
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 512Mi
+          requests:
+            cpu: 10m
+            memory: 256Mi
       dnsPolicy: ClusterFirst
       imagePullSecrets:
       - name: regsecret
