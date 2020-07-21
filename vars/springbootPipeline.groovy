@@ -205,17 +205,18 @@ def call(Map pipelineParams) {
               env.commentBody = "Build [#${BUILD_NUMBER}](${BUILD_URL}) with result: ${currentBuild.currentResult}"
               writeFile([file: 'create-pr-comment.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr-comment.sh')])
               sh "bash create-pr-comment.sh"
+            } else {
+            // Post a notification in Slack channel
+              if ( currentBuild.currentResult == "SUCCESS")
+                env.msgColor = "good"
+              else 
+                env.msgColor = "danger"
+              slackSend(
+                color: msgColor,
+                message: "*${currentBuild.currentResult}:* Job ${JOB_NAME} build ${BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
+              )
             }
           }
-        // Post a notification in Slack channel
-          if ( currentBuild.currentResult == "SUCCESS")
-            env.msgColor = "good"
-          else 
-            env.msgColor = "danger"
-          slackSend(
-            color: msgColor,
-            message: "*${currentBuild.currentResult}:* Job ${JOB_NAME} build ${BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
-          )
         }
       }
     }
