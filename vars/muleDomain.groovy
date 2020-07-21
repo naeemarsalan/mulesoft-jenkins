@@ -38,6 +38,7 @@ def call(Map pipelineParams) {
             }
         }
       }
+
       stage('Linter') {
         when {
           expression { return readFile('pom.xml').contains('<packaging>mule-domain</packaging>') }

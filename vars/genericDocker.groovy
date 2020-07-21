@@ -14,8 +14,6 @@ def call(Map pipelineParams) {
             env.repoName = sh(script: 'basename $GIT_URL | sed "s/.git//"', returnStdout: true).trim()
             env.gitCommitID = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
             bitbucketStatusNotify(buildState: 'INPROGRESS', repoSlug: "${repoName}", commitId: "${gitCommitID}")
-            // get latest git commit ID
-            env.gitId = sh(script: 'echo ${GIT_COMMIT} | cut -c1-7', returnStdout: true).trim()
             // Set application environment variable depending on git branch
             if ( GIT_BRANCH ==~ /(.*master)/ ) {
               env.appEnv = "prod"
