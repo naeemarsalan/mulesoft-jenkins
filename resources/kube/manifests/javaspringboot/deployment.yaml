@@ -2,35 +2,42 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: ${appName}
+  name: ${repoName}
   namespace: ${projectName}-${appEnv}
   labels:
-    app: ${appName}
+    app: ${repoName}
   annotations:
     fluxcd.io/automated: "true"
-    fluxcd.io/tag.${appName}: regex:^${appEnv}-.*
+    fluxcd.io/tag.${repoName}: regex:^${appEnv}-.*
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: ${appName}
+      app: ${repoName}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: ${appName}
+        app: ${repoName}
     spec:
       containers:
-      - name: ${appName}
-        image: ${dockerRegistryUrl}/${projectName}/${appName}:${appEnv}-latest
+      - name: ${repoName}
+        image: ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-latest
         imagePullPolicy: Always
         ports:
         - containerPort: ${appPort}
           name: http
           protocol: TCP
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 512Mi
+          requests:
+            cpu: 10m
+            memory: 256Mi
       dnsPolicy: ClusterFirst
       imagePullSecrets:
       - name: regsecret
@@ -40,14 +47,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ${appName}
+  name: ${repoName}
   namespace: ${projectName}-${appEnv}
 spec:
   ports:
-  - name: ${appName}
+  - name: ${repoName}
     port: ${appPort}
     protocol: TCP
     targetPort: ${appPort}
   selector:
-    app: ${appName}
+    app: ${repoName}
   type: ClusterIP

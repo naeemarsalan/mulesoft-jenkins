@@ -7,13 +7,13 @@ def call(Map pipelineParams) {
       }
     }
     stages {
-      stage('Populate Env Vars') {
+      stage('Prepare Env Vars') {
         steps {
           script {
-            // Get application's name (from git repo name)
-            env.appName = sh(script: 'basename ${GIT_URL} |sed "s/.git//"', returnStdout: true).trim()
-            // get latest git commit ID
-            env.gitId = sh(script: 'echo ${GIT_COMMIT} | cut -c1-7', returnStdout: true).trim()
+          // Notify BitBucket that a build was started
+            env.repoName = sh(script: 'basename $GIT_URL | sed "s/.git//"', returnStdout: true).trim()
+            env.gitCommitID = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+            bitbucketStatusNotify(buildState: 'INPROGRESS', repoSlug: "${repoName}", commitId: "${gitCommitID}")
             // Set application environment variable depending on git branch
             if ( GIT_BRANCH ==~ /(.*master)/ ) {
               env.appEnv = "prod"
@@ -49,9 +49,9 @@ def call(Map pipelineParams) {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerUrl} -u ${USERNAME} -p ${PASSWORD}
-                docker build -t ${dockerUrl}/${projectName}/${appName}:${appEnv}-${gitId} -t ${dockerUrl}/${projectName}/${appName}:${appEnv}-latest .
-                docker push ${dockerUrl}/${projectName}/${appName}:${appEnv}-${gitId}
-                docker push ${dockerUrl}/${projectName}/${appName}:${appEnv}-latest
+                docker build -t ${dockerUrl}/${projectName}/${repoName}:${appEnv}-$(echo ${gitCommitID} | cut -c1-7) -t ${dockerUrl}/${projectName}/${repoName}:${appEnv}-latest .
+                docker push ${dockerUrl}/${projectName}/${repoName}:${appEnv}-$(echo ${gitCommitID} | cut -c1-7)
+                docker push ${dockerUrl}/${projectName}/${repoName}:${appEnv}-latest
               """
             }
           }
@@ -59,9 +59,23 @@ def call(Map pipelineParams) {
       }
     }
 
+    // POST-BUILD NOTIFICATIONS AND INTEGRATIONS
     post {
+      success {
+        bitbucketStatusNotify(buildState: 'SUCCESSFUL', repoSlug: "${repoName}", commitId: "${gitCommitID}")
+      }
+      failure {
+        bitbucketStatusNotify(buildState: 'FAILED', repoSlug: "${repoName}", commitId: "${gitCommitID}")
+      }
       always {
         script {
+          //Check if the webhook exists in BitBucket and add it if it doesn't exist
+          env.workSpaceBB = sh(script: "echo $GIT_URL | awk '\$0=\$2' FS=: RS=\\/", returnStdout: true).trim()
+          withCredentials([string(credentialsId: "${serviceAccount}-bitbucket-app-pass", variable: "serviceAccountAppPass")]) {
+            writeFile([file: 'create-bb-webhook.sh', text: libraryResource('scripts/bitbucket-integrations/create-bb-webhook.sh')])
+            sh "bash create-bb-webhook.sh"
+          }
+          // Post a notification in Slack channel
           if ( currentBuild.currentResult == "SUCCESS")
             env.msgColor = "good"
           else 

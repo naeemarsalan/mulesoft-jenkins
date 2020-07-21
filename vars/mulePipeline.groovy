@@ -12,7 +12,7 @@ def call(Map pipelineParams) {
     }
 
     stages {
-      stage('Prepare Env For Build') {
+      stage('Prepare Env Vars') {
         steps {
           script {
             // Bitbucket Push and Pull Request Plugin provides this variable containing the branch that triggered this build
@@ -161,7 +161,7 @@ def call(Map pipelineParams) {
         }
       }
 
-      stage('Add version tag') {
+      stage('Add Version Tag') {
         when {
           expression { BITBUCKET_SOURCE_BRANCH == "master" }
           expression { params.skipCI == false }
@@ -190,16 +190,15 @@ def call(Map pipelineParams) {
       }
       always {
         script {
-          //Check if webhook exists in BitBucket and add it if it doesn't exist
+          //Check if the webhook exists in BitBucket and add it if it doesn't exist
           env.workSpaceBB = sh(script: "echo $GIT_URL | awk '\$0=\$2' FS=: RS=\\/", returnStdout: true).trim()
-          echo "BB workspace: ${workSpaceBB}"
           withCredentials([string(credentialsId: "${serviceAccount}-bitbucket-app-pass", variable: "serviceAccountAppPass")]) {
-            writeFile([file: 'create-bb-webhook.sh', text: libraryResource('scripts/create-bb-webhook.sh')])
+            writeFile([file: 'create-bb-webhook.sh', text: libraryResource('scripts/bitbucket-integrations/create-bb-webhook.sh')])
             sh "bash create-bb-webhook.sh"
             //add a comment to Pull Request if this is a PR, using the same credentials
             if (env.BITBUCKET_PULL_REQUEST_ID != null) {
               env.commentBody = "Build [#${BUILD_NUMBER}](${BUILD_URL}) with result: ${currentBuild.currentResult}  \\n[Tests coverage report](${JOB_URL}Coverage_20Report/)  \\nPlease check [linter script output](${BUILD_URL}execution/node/40/log/)"
-              writeFile([file: 'create-pr-comment.sh', text: libraryResource('scripts/create-pr-comment.sh')])
+              writeFile([file: 'create-pr-comment.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr-comment.sh')])
               sh "bash create-pr-comment.sh"
             }
           }
