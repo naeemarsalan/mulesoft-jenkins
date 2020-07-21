@@ -10,6 +10,7 @@ generate_json_payload()
       "events": [
         "pullrequest:updated",
         "pullrequest:created",
+        "pullrequest:comment_created",
         "repo:push"
       ]
   }
