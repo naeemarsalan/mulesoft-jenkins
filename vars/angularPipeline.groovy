@@ -79,8 +79,8 @@ def call(Map pipelineParams) {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
-                docker build --build-arg configuration=${configuration} -t ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-${appVersion}-${gitCommitId} -t ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-latest .
-                docker push ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-${appVersion}-${gitCommitId}
+                docker build --build-arg configuration=${configuration} -t ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-${appVersion}-\$(echo ${gitCommitID} | cut -c1-7) -t ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-latest .
+                docker push ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-${appVersion}-\$(echo ${gitCommitID} | cut -c1-7)
                 docker push ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-latest
               """
             }
