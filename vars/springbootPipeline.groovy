@@ -28,7 +28,7 @@ def call(Map pipelineParams) {
             env.artifactName = readMavenPom().getArtifactId()
             env.groupName = readMavenPom().getGroupId()
             env.appVersion = readMavenPom().getVersion()
-            env.majorVer = sh(script: "echo $appVersion | awk -F\\. '{print $1}'", returnStdout: true).trim()
+            env.majorVer = sh(script: "echo $appVersion | awk -F\\. '{print \$1}'", returnStdout: true).trim()
             env.javaVersion = readMavenPom().getProperties().getProperty('java.version')
           // Set application environment variable depending on git branch
             if ( BITBUCKET_SOURCE_BRANCH == "master" ) {
