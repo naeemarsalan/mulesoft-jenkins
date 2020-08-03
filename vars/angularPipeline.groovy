@@ -25,16 +25,14 @@ def call(Map pipelineParams) {
             env.repoName = sh(script: 'basename $GIT_URL | sed "s/.git//"', returnStdout: true).trim()
             env.gitCommitID = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
             bitbucketStatusNotify(buildState: 'INPROGRESS', repoSlug: "${repoName}", commitId: "${gitCommitID}")
-            // Set application environment variable depending on git branch
+          // Set application environment variable depending on git branch
             if ( BITBUCKET_SOURCE_BRANCH == "master" ) {
               env.appEnv = "prod"
-            }
-            if ( BITBUCKET_SOURCE_BRANCH == "develop" ) {
-              env.appEnv = "dev"
-            }
-            if ( BITBUCKET_SOURCE_BRANCH == "uat" ) {
+            } else if ( BITBUCKET_SOURCE_BRANCH == "uat" ) {
               env.appEnv = "uat"
-            }
+            } else {
+              env.appEnv = "dev"
+            } 
             //check if target deployment (k8s) repo and branch is set, and if it is not, default to ms3 Kubernetes repo and master branch
             if (env.targetRepoName == null) { env.targetRepoName = "${ms3KubeRepo}"}
             if (env.targetBranch == null) { env.targetBranch = "master" }
@@ -69,7 +67,7 @@ def call(Map pipelineParams) {
 
       stage('Build and Push Docker') {
         when {
-          expression { BITBUCKET_SOURCE_BRANCH ==~ /(master|uat|develop)/  }
+          expression { env.BITBUCKET_PULL_REQUEST_ID == null }
         }
         steps {
           container('dind') {
@@ -88,7 +86,7 @@ def call(Map pipelineParams) {
 
       stage('Generate App Manifest') {
         when {
-          expression { BITBUCKET_SOURCE_BRANCH ==~ /(master|uat|develop)/  }
+          expression { env.BITBUCKET_PULL_REQUEST_ID == null }
         }
         steps {
           git (
