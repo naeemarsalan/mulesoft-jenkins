@@ -9,39 +9,35 @@ def call(Map pipelineParams) {
     stages {
       stage('Prepare Env Vars') {
         steps {
-          container('node') {
-            // the linter script itself should be added later, for now this stage is used to populate environment variables
-            script {
-              // Bitbucket Push and Pull Request Plugin provides this variable containing the branch that triggered this build
-              // In very rare circumstances it happens to be null when job is triggered manually, in that case assign to it value of default $GIT_BRANCH variable
-              if (env.BITBUCKET_SOURCE_BRANCH == null) { 
-                env.BITBUCKET_SOURCE_BRANCH = sh(script: "echo $GIT_BRANCH | grep -oP '(?<=origin/).*'", returnStdout: true).trim()
-              }
-              // Checkout provided branch 
-              echo "Now checking out source branch: ${BITBUCKET_SOURCE_BRANCH}"
-              git (url: "${GIT_URL}",
-              credentialsId: "${serviceAccount}-bitbucket-ssh-key",
-              branch: "${BITBUCKET_SOURCE_BRANCH}")
-              // Notify BitBucket that a build was started
-              env.repoName = sh(script: 'basename $GIT_URL | sed "s/.git//"', returnStdout: true).trim()
-              env.gitCommitID = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-              bitbucketStatusNotify(buildState: 'INPROGRESS', repoSlug: "${repoName}", commitId: "${gitCommitID}")
-              // Get application version from package.json
-              env.appVersion = sh(script: '''node -p -e "require('./package.json').version"''', returnStdout: true).trim()
-              // Set application environment variable depending on git branch
-              if ( BITBUCKET_SOURCE_BRANCH == "master" ) {
-                env.appEnv = "prod"
-              }
-              if ( BITBUCKET_SOURCE_BRANCH == "develop" ) {
-                env.appEnv = "dev"
-              }
-              if ( BITBUCKET_SOURCE_BRANCH == "uat" ) {
-                env.appEnv = "uat"
-              }
-              //check if target deployment (k8s) repo and branch is set, and if it is not, default to ms3 Kubernetes repo and master branch
-              if (env.targetRepoName == null) { env.targetRepoName = "${ms3KubeRepo}"}
-              if (env.targetBranch == null) { env.targetBranch = "master" }
+          // the linter script itself should be added later, for now this stage is used to populate environment variables
+          script {
+            // Bitbucket Push and Pull Request Plugin provides this variable containing the branch that triggered this build
+            // In very rare circumstances it happens to be null when job is triggered manually, in that case assign to it value of default $GIT_BRANCH variable
+            if (env.BITBUCKET_SOURCE_BRANCH == null) { 
+              env.BITBUCKET_SOURCE_BRANCH = sh(script: "echo $GIT_BRANCH | grep -oP '(?<=origin/).*'", returnStdout: true).trim()
             }
+            // Checkout provided branch 
+            echo "Now checking out source branch: ${BITBUCKET_SOURCE_BRANCH}"
+            git (url: "${GIT_URL}",
+            credentialsId: "${serviceAccount}-bitbucket-ssh-key",
+            branch: "${BITBUCKET_SOURCE_BRANCH}")
+            // Notify BitBucket that a build was started
+            env.repoName = sh(script: 'basename $GIT_URL | sed "s/.git//"', returnStdout: true).trim()
+            env.gitCommitID = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+            bitbucketStatusNotify(buildState: 'INPROGRESS', repoSlug: "${repoName}", commitId: "${gitCommitID}")
+            // Set application environment variable depending on git branch
+            if ( BITBUCKET_SOURCE_BRANCH == "master" ) {
+              env.appEnv = "prod"
+            }
+            if ( BITBUCKET_SOURCE_BRANCH == "develop" ) {
+              env.appEnv = "dev"
+            }
+            if ( BITBUCKET_SOURCE_BRANCH == "uat" ) {
+              env.appEnv = "uat"
+            }
+            //check if target deployment (k8s) repo and branch is set, and if it is not, default to ms3 Kubernetes repo and master branch
+            if (env.targetRepoName == null) { env.targetRepoName = "${ms3KubeRepo}"}
+            if (env.targetBranch == null) { env.targetBranch = "master" }
           }
         }
       }
@@ -50,6 +46,8 @@ def call(Map pipelineParams) {
         steps {
           container('node') {
             script {
+              // Get application version from package.json
+              env.appVersion = sh(script: '''node -p -e "require('./package.json').version"''', returnStdout: true).trim()
               // Run tests with coverage report
               sh """
                 npm install
