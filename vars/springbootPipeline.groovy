@@ -1,5 +1,4 @@
 def call(Map pipelineParams) {
-
   pipeline {
     agent {
       kubernetes {
@@ -28,7 +27,7 @@ def call(Map pipelineParams) {
             env.artifactName = readMavenPom().getArtifactId()
             env.groupName = readMavenPom().getGroupId()
             env.appVersion = readMavenPom().getVersion()
-            env.majorVer = sh(script: "echo $appVersion | awk -F\\. '{print \$1}'", returnStdout: true).trim()
+            env.majVersion = sh(script: "echo $appVersion | awk -F\\. '{print \$1}'", returnStdout: true).trim()
             env.javaVersion = readMavenPom().getProperties().getProperty('java.version')
           // Set application environment variable depending on git branch
             if ( BITBUCKET_SOURCE_BRANCH == "master" ) {
@@ -37,8 +36,9 @@ def call(Map pipelineParams) {
               env.appEnv = "uat"
             } else {
               env.appEnv = "dev"
-            } 
-
+            }
+          // Set the port where application is listening
+            if (env.appPort == null) { env.appPort = "8080"}
           // Java artifact will be uploaded to Nexus, target repository depends on is the artifacts version a -SNAPSHOT or not
             if ("${appVersion}" =~ "SNAPSHOT") {
                 env.nexusUrl = nexusSnapshotUrl
@@ -106,9 +106,13 @@ def call(Map pipelineParams) {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
-                docker build -t ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-${appVersion}-\$(echo ${gitCommitID} | cut -c1-7) -t ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-latest .
-                docker push ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-${appVersion}-\$(echo ${gitCommitID} | cut -c1-7)
-                docker push ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-latest
+                docker build \
+                  -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}-\$(echo ${gitCommitID} | cut -c1-7) \
+                  -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${majVersion} \
+                  -t ${dockerRegistryUrl}/${repoName}/${appEnv}:latest .
+                docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}-\$(echo ${gitCommitID} | cut -c1-7)
+                docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${majVersion}
+                docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:latest
               """
             }
           }
@@ -129,7 +133,7 @@ def call(Map pipelineParams) {
           )
           script {
             // check if deployment already exists
-            if (fileExists("namespaces/${repoName}-${appEnv}/v${majorVer}.yaml")) {
+            if (fileExists("namespaces/${repoName}-${appEnv}/v${majVersion}.yaml")) {
               echo "Deployment manifest already exists in k8s repository. Used Docker image tag will be updated automatically in a few minutes."
             } else {
               container('git-in-docker') {
@@ -139,15 +143,15 @@ def call(Map pipelineParams) {
                 // substitute all variables in deployment manifest and add it to target directory/namespace
                 sh """
                   mkdir namespaces/${repoName}-${appEnv}/
-                  envsubst < deployment-template.yaml > namespaces/${repoName}-${appEnv}/v${majorVer}.yaml
+                  envsubst < deployment-template.yaml > namespaces/${repoName}-${appEnv}/v${majVersion}.yaml
                   envsubst < namespace-template.yaml > namespaces/${repoName}-${appEnv}/namespace.yaml
                 """
                 // parse and populate variables that will be used by deployment script
                 env.targetRepoOwner = sh(script: "echo $targetRepoName | awk '\$0=\$2' FS=: RS=\\/", returnStdout: true).trim()
                 env.targetRepoName = sh(script: 'basename $targetRepoName | sed "s/.git//"', returnStdout: true).trim()
                 env.addedFiles = "namespaces/${repoName}-${appEnv}/*"
-                env.commitMessage = "Added deployment manifest for ${repoName}-${appEnv}/v${majorVer}"
-                env.featureBranch = "feature/deployment-of-${repoName}-${appEnv}/v${majorVer}-build-${BUILD_NUMBER}"
+                env.commitMessage = "Added deployment manifest for ${repoName}-${appEnv}/v${majVersion}"
+                env.featureBranch = "feature/deployment-of-${repoName}-${appEnv}/v${majVersion}-build-${BUILD_NUMBER}"
 
                 // run the PR creation script
                 writeFile([file: 'create-pr-bitbucket.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr.sh')])
@@ -156,7 +160,7 @@ def call(Map pipelineParams) {
                 }
               }
             }
-            echo "Access to application ${repoName} should be set through Kong Proxy, using the internal cluster URL:\nv${majorVer}.${repoName}-${appEnv}.svc.cluster.local"
+            echo "Access to application ${repoName} should be set through Kong Proxy, using the internal cluster URL:\nv${majVersion}.${repoName}-${appEnv}.svc.cluster.local"
           }
         }
       }
