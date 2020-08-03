@@ -39,19 +39,12 @@ def call(Map pipelineParams) {
               env.appEnv = "dev"
             } 
 
-          // Artifact will be uploaded to Nexus, target repository depends on is the artifacts version a -SNAPSHOT or not
+          // Java artifact will be uploaded to Nexus, target repository depends on is the artifacts version a -SNAPSHOT or not
             if ("${appVersion}" =~ "SNAPSHOT") {
                 env.nexusUrl = nexusSnapshotUrl
             } else {
               env.nexusUrl = nexusReleaseUrl
             }
-          // Check if target Java version requires a different Maven image
-            if ( javaVersion == "14" ) {
-              env.mvnContainerName = "maven-jdk-14"
-            } else {
-              env.mvnContainerName = "maven"
-            }
-            echo "Will use Maven container: ${mvnContainerName}"
           //check if target deployment (k8s) repo and branch is set, and if it is not, default to ms3 Kubernetes repo and master branch
             if (env.targetRepoName == null) { env.targetRepoName = "${ms3KubeRepo}"}
             if (env.targetBranch == null) { env.targetBranch = "master" }
@@ -76,7 +69,7 @@ def call(Map pipelineParams) {
           expression { env.BITBUCKET_PULL_REQUEST_ID == null }
         }
         steps {
-          container("${mvnContainerName}") {
+          container("maven-jdk-${javaVersion}") {
             script{
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 sh "mvn -s '$MAVEN_SETTINGS_FILE' clean package -DskipTests"
@@ -91,7 +84,7 @@ def call(Map pipelineParams) {
           expression { env.BITBUCKET_PULL_REQUEST_ID == null }
         }
         steps {
-          container("${mvnContainerName}") {
+          container("maven-jdk-${javaVersion}") {
             script {
               echo "Artifact is being uploaded to: ${nexusUrl}"
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
