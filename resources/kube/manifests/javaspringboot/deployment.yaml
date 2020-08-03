@@ -3,29 +3,35 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ${repoName}
-  namespace: ${projectName}-${appEnv}
+  namespace: ${repoName}-${appEnv}
   labels:
-    app: ${repoName}
+    appName: ${repoName}
+    appVersion: v${majVersion}
+    environment: ${appEnv}
   annotations:
     fluxcd.io/automated: "true"
-    fluxcd.io/tag.${repoName}: regex:^${appEnv}-.*
+    fluxcd.io/tag.${repoName}: regex:^${majVersion}.*
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: ${repoName}
+      appName: ${repoName}
+      appVersion: v${majVersion}
+      environment: ${appEnv}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: ${repoName}
+        appName: ${repoName}
+        appVersion: v${majVersion}
+        environment: ${appEnv}
     spec:
       containers:
       - name: ${repoName}
-        image: ${dockerRegistryUrl}/${projectName}/${repoName}:${appEnv}-latest
+        image: ${dockerRegistryUrl}/${repoName}/${appEnv}:latest
         imagePullPolicy: Always
         ports:
         - containerPort: ${appPort}
@@ -47,14 +53,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ${repoName}
-  namespace: ${projectName}-${appEnv}
+  name: v${majVersion}
+  namespace: ${repoName}-${appEnv}
 spec:
   ports:
-  - name: ${repoName}
-    port: ${appPort}
+  - port: ${appPort}
     protocol: TCP
     targetPort: ${appPort}
   selector:
-    app: ${repoName}
+    appName: ${repoName}
+    appVersion: v${majVersion}
+    environment: ${appEnv}
   type: ClusterIP
