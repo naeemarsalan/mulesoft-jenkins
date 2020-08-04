@@ -58,7 +58,7 @@ def call(Map pipelineParams) {
             script{
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 withCredentials([string(credentialsId: "${appEnv}-encryptor-pwd", variable: 'encryptorPasswd')]) {
-                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Dspring.profiles.active=${appEnv} -Djasypt.encryptor.password=${encryptorPasswd}"
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Dspring.profiles.active=${appEnv}  -Dspring.config.name=${repoName} -Djasypt.encryptor.password=${encryptorPasswd}"
                 }
               }
             }
