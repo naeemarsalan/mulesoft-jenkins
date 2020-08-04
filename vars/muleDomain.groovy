@@ -62,8 +62,8 @@ def call(Map pipelineParams) {
           container('maven') {
             script {
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
-                withCredentials([usernamePassword(credentialsId: 'devoptions', passwordVariable: 'appkey', usernameVariable: 'appenv')]) {
-                sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${maven_env} -Dapp.key=${appkey}"
+                withCredentials([string(credentialsId: "${maven_env}-encryptor-pwd", variable: 'encryptorPasswd')]) {
+                  sh "mvn -s '$MAVEN_SETTINGS_FILE' clean test -Denv=${maven_env} -Dapp.key=${encryptorPasswd}"
                 }
               }
             }
