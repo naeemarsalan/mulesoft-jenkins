@@ -31,15 +31,20 @@ def call(Map pipelineParams) {
             env.javaVersion = readMavenPom().getProperties().getProperty('java.version')
           // If not set in job properties, set application environment variable depending on git branch
             if (env.appEnv == null) {
-              if ( BITBUCKET_SOURCE_BRANCH == "master" ) {
-                env.appEnv = "prod"
-              } else if ( BITBUCKET_SOURCE_BRANCH == "uat" ) {
-                env.appEnv = "uat"
-              } else {
-                env.appEnv = "dev"
+              switch(BITBUCKET_SOURCE_BRANCH) {
+                case "master":
+                  env.appEnv = "prod"
+                  break
+                case "uat":
+                  env.appEnv = "uat"
+                  break
+                default:
+                  env.appEnv = "dev"
+                  break
               }
             }
-          // If not set in job properties, set API major version from .osb file
+            echo "Environment ${appEnv}"
+          // If not set in job properties, set API major version from .oas file
             if (env.apiMajVersion == null) { env.apiMajVersion = "1"} // will add this functionality in next PR
           // If not set in job properties, set the port where application is listening
             if (env.appPort == null) { env.appPort = "8080"}
