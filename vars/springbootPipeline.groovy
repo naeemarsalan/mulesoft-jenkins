@@ -140,7 +140,7 @@ def call(Map pipelineParams) {
           )
           script {
             // check if deployment of the API with the same major contract version already exists
-            if (appMileExists("namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml")) {
+            if (fileExists("namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml")) {
               echo "Deployment manifest already exists in k8s repository. Used Docker image tag will be updated automatically in a few minutes."
             } else {
               container('git-in-docker') {
@@ -150,15 +150,15 @@ def call(Map pipelineParams) {
                 // substitute all variables in deployment manifest and add it to target directory/namespace
                 sh """
                   mkdir namespaces/${repoName}-${appEnv}/
-                  envsappMbst < deployment-template.yaml > namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml
+                  envsubst < deployment-template.yaml > namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml
                   envsubst < namespace-template.yaml > namespaces/${repoName}-${appEnv}/namespace.yaml
                 """
                 // parse and populate variables that will be used by deployment script
                 env.targetRepoOwner = sh(script: "echo $targetRepoName | awk '\$0=\$2' FS=: RS=\\/", returnStdout: true).trim()
                 env.targetRepoName = sh(script: 'basename $targetRepoName | sed "s/.git//"', returnStdout: true).trim()
                 env.addedFiles = "namespaces/${repoName}-${appEnv}/*"
-                env.appMommitMessage = "Added deployment manifest for ${repoName}-${appEnv}/v${apiMajVersion}"
-                env.appMeatureBranch = "feature/deployment-of-${repoName}-${appEnv}/v${apiMajVersion}-build-${BUILD_NUMBER}"
+                env.commitMessage = "Added deployment manifest for ${repoName}-${appEnv}/v${apiMajVersion}"
+                env.featureBranch = "feature/deployment-of-${repoName}-${appEnv}/v${apiMajVersion}-build-${BUILD_NUMBER}"
 
                 // run the PR creation script
                 writeFile([file: 'create-pr-bitbucket.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr.sh')])
@@ -167,7 +167,7 @@ def call(Map pipelineParams) {
                 }
               }
             }
-            echoappM"Access to application ${repoName} should be set through Kong Proxy, using the internal cluster URL:\nv${apiMajVersion}.${repoName}-${appEnv}.svc.cluster.local"
+            echo "Access to application ${repoName} should be set through Kong Proxy, using the internal cluster URL:\nv${apiMajVersion}.${repoName}-${appEnv}.svc.cluster.local"
           }
         }
       }
