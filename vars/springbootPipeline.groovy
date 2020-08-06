@@ -27,17 +27,26 @@ def call(Map pipelineParams) {
             env.artifactName = readMavenPom().getArtifactId()
             env.groupName = readMavenPom().getGroupId()
             env.appVersion = readMavenPom().getVersion()
-            env.majVersion = sh(script: "echo $appVersion | awk -F\\. '{print \$1}'", returnStdout: true).trim()
+            env.appMajVersion = sh(script: "echo $appVersion | awk -F\\. '{print \$1}'", returnStdout: true).trim()
             env.javaVersion = readMavenPom().getProperties().getProperty('java.version')
-          // Set application environment variable depending on git branch
-            if ( BITBUCKET_SOURCE_BRANCH == "master" ) {
-              env.appEnv = "prod"
-            } else if ( BITBUCKET_SOURCE_BRANCH == "uat" ) {
-              env.appEnv = "uat"
-            } else {
-              env.appEnv = "dev"
+          // If not set in job properties, set application environment variable depending on git branch
+            if (env.appEnv == null) {
+              switch(BITBUCKET_SOURCE_BRANCH) {
+                case "master":
+                  env.appEnv = "prod"
+                  break
+                case "uat":
+                  env.appEnv = "uat"
+                  break
+                default:
+                  env.appEnv = "dev"
+                  break
+              }
             }
-          // Set the port where application is listening
+            echo "Environment ${appEnv}"
+          // If not set in job properties, set API major version from .oas file
+            if (env.apiMajVersion == null) { env.apiMajVersion = "1"} // will add this functionality in next PR
+          // If not set in job properties, set the port where application is listening
             if (env.appPort == null) { env.appPort = "8080"}
           // Java artifact will be uploaded to Nexus, target repository depends on is the artifacts version a -SNAPSHOT or not
             if ("${appVersion}" =~ "SNAPSHOT") {
@@ -104,17 +113,18 @@ def call(Map pipelineParams) {
           expression { env.BITBUCKET_PULL_REQUEST_ID == null }
         }
         steps {
+          // Get rid of "-SNAPSHOT" in appVersion for docker tag
+          if ("${appVersion}" =~ "SNAPSHOT") { env.appVersion = sh(script: "echo $appVersion | awk -F\\-SNAPSHOT '{print \$1}'", returnStdout: true).trim() }
+          // Build image with 2 tags: appVersion-$gitCommit; appMajorVersion
           container('dind') {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
                 docker build \
                   -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}-\$(echo ${gitCommitID} | cut -c1-7) \
-                  -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${majVersion} \
-                  -t ${dockerRegistryUrl}/${repoName}/${appEnv}:latest .
+                  -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${appMajVersion} .
                 docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}-\$(echo ${gitCommitID} | cut -c1-7)
-                docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${majVersion}
-                docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:latest
+                docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${appMajVersion}
               """
             }
           }
@@ -134,8 +144,8 @@ def call(Map pipelineParams) {
             branch: "${targetBranch}"
           )
           script {
-            // check if deployment already exists
-            if (fileExists("namespaces/${repoName}-${appEnv}/v${majVersion}.yaml")) {
+            // check if deployment of the API with the same major contract version already exists
+            if (fileExists("namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml")) {
               echo "Deployment manifest already exists in k8s repository. Used Docker image tag will be updated automatically in a few minutes."
             } else {
               container('git-in-docker') {
@@ -145,15 +155,15 @@ def call(Map pipelineParams) {
                 // substitute all variables in deployment manifest and add it to target directory/namespace
                 sh """
                   mkdir namespaces/${repoName}-${appEnv}/
-                  envsubst < deployment-template.yaml > namespaces/${repoName}-${appEnv}/v${majVersion}.yaml
+                  envsubst < deployment-template.yaml > namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml
                   envsubst < namespace-template.yaml > namespaces/${repoName}-${appEnv}/namespace.yaml
                 """
                 // parse and populate variables that will be used by deployment script
                 env.targetRepoOwner = sh(script: "echo $targetRepoName | awk '\$0=\$2' FS=: RS=\\/", returnStdout: true).trim()
                 env.targetRepoName = sh(script: 'basename $targetRepoName | sed "s/.git//"', returnStdout: true).trim()
                 env.addedFiles = "namespaces/${repoName}-${appEnv}/*"
-                env.commitMessage = "Added deployment manifest for ${repoName}-${appEnv}/v${majVersion}"
-                env.featureBranch = "feature/deployment-of-${repoName}-${appEnv}/v${majVersion}-build-${BUILD_NUMBER}"
+                env.commitMessage = "Added deployment manifest for ${repoName}-${appEnv}/v${apiMajVersion}"
+                env.featureBranch = "feature/deployment-of-${repoName}-${appEnv}/v${apiMajVersion}-build-${BUILD_NUMBER}"
 
                 // run the PR creation script
                 writeFile([file: 'create-pr-bitbucket.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr.sh')])
@@ -162,7 +172,7 @@ def call(Map pipelineParams) {
                 }
               }
             }
-            echo "Access to application ${repoName} should be set through Kong Proxy, using the internal cluster URL:\nv${majVersion}.${repoName}-${appEnv}.svc.cluster.local"
+            echo "Access to application ${repoName} should be set through Kong Proxy, using the internal cluster URL:\nv${apiMajVersion}.${repoName}-${appEnv}.svc.cluster.local"
           }
         }
       }
@@ -200,7 +210,7 @@ def call(Map pipelineParams) {
           withCredentials([string(credentialsId: "${serviceAccount}-bitbucket-app-pass", variable: "serviceAccountAppPass")]) {
             writeFile([file: 'create-bb-webhook.sh', text: libraryResource('scripts/bitbucket-integrations/create-bb-webhook.sh')])
             sh "bash create-bb-webhook.sh"
-          //add a comment to Pull Request if this is a PR, using the same credentials
+          // if this is a build that was triggered by a PR, add a comment to it, using the same credentials
             if (env.BITBUCKET_PULL_REQUEST_ID != null) {
               env.commentBody = "Build [#${BUILD_NUMBER}](${BUILD_URL}) with result: ${currentBuild.currentResult}"
               writeFile([file: 'create-pr-comment.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr-comment.sh')])
