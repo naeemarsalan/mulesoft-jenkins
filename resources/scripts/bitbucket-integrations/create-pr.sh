@@ -147,4 +147,4 @@ export featureBrCommitId=$(git rev-parse HEAD | cut -c1-12)
 # create a PR using POST request to BitBucket's API
 curl -s https://api.bitbucket.org/2.0/repositories/$targetRepoOwner/$targetRepoName/pullrequests -u $serviceAccount:$serviceAccountAppPass --request POST --header 'Content-Type: application/json' --data "$(generate_json_payload)"
 
-printf "Please review and merge the following Pull Request in order to deploy the application to Kubernetes:\nhttps://bitbucket.org/${targetRepoOwner}/${targetRepoName}/pull-requests/"
+printf "\n\nPlease review and merge the following Pull Request in order to deploy the application to Kubernetes:\nhttps://bitbucket.org/${targetRepoOwner}/${targetRepoName}/pull-requests/\n\n"
