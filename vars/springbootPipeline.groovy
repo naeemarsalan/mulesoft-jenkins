@@ -122,8 +122,10 @@ def call(Map pipelineParams) {
           expression { env.BITBUCKET_PULL_REQUEST_ID == null }
         }
         steps {
-          // Get rid of "-SNAPSHOT" in appVersion for docker tag
-          if ("${appVersion}" =~ "SNAPSHOT") { env.appVersion = sh(script: "echo \$appVersion | awk -F\\-SNAPSHOT '{print \$1}'", returnStdout: true).trim() }
+          script{
+            // Get rid of "-SNAPSHOT" in appVersion for a docker tag
+            if ("${appVersion}" =~ "SNAPSHOT") { env.appVersion = sh(script: "echo \$appVersion | awk -F\\-SNAPSHOT '{print \$1}'", returnStdout: true).trim() }
+          }
           // Build image with 2 tags: appVersion-$gitCommit; appMajorVersion
           container('dind') {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
