@@ -1,3 +1,4 @@
+# Springboot Docker-in-Docker agent manifest
 apiVersion: v1
 kind: Pod
 metadata:
@@ -19,14 +20,14 @@ spec:
     tty: true 
     command: ['cat']
   - name: dind
-    image: docker:18.05-dind
+    image: docker:19.03-dind
     securityContext:
       privileged: true
     volumeMounts:
       - name: dind-storage
         mountPath: /var/lib/docker
-  - name: git-in-docker
-    image: docker-public.kube.cloudapps.ms3-inc.com/cicd-tools/git-in-docker:dev-8fbe659
+  - name: git-alpine
+    image: docker-public.kube.cloudapps.ms3-inc.com/cicd-tools/git-alpine:dev-8fbe659
     tty: true
     command: ['cat']
   resources:

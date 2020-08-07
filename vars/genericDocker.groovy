@@ -3,7 +3,7 @@ def call(Map pipelineParams) {
   pipeline {
     agent {
       kubernetes {
-        yaml libraryResource('kube/agents/dockerInDocker.yaml')
+        yaml libraryResource('kube/agents/simple-dind.yaml')
       }
     }
     stages {

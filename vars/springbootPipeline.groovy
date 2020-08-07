@@ -2,7 +2,7 @@ def call(Map pipelineParams) {
   pipeline {
     agent {
       kubernetes {
-        yaml libraryResource('kube/agents/dockerInDocker.yaml')
+        yaml libraryResource('kube/agents/springboot-dind.yaml')
       }
     }
     stages {
@@ -45,7 +45,16 @@ def call(Map pipelineParams) {
             }
             echo "Environment ${appEnv}"
           // If not set in job properties, set API major version from .oas file
-            if (env.apiMajVersion == null) { env.apiMajVersion = "1"} // will add this functionality in next PR
+            if (env.apiMajVersion == null) { 
+              if (fileExists("src/main/resources/api/${repoName}.oas")) {
+                env.apiVersion = sh(script: "grep -R version src/main/resources/api/\${repoName}.oas | head -1 | awk '{print \$2}'", returnStdout: true).trim()
+                env.apiMajVersion = sh(script: " echo \$apiVersion | awk -F\\. '{print \$1}'", returnStdout: true).trim()
+              } else {
+                env.apiMajVersion = "1"
+                echo "File src/main/resources/api/${repoName}.oas not found! Setting"
+              }
+            }
+            echo "API contract version (major): ${apiMajVersion}"
           // If not set in job properties, set the port where application is listening
             if (env.appPort == null) { env.appPort = "8080"}
           // Java artifact will be uploaded to Nexus, target repository depends on is the artifacts version a -SNAPSHOT or not
@@ -61,7 +70,7 @@ def call(Map pipelineParams) {
         }
       }
 
-      stage('Test') {
+       stage('Test') {
         steps {
           container("maven-jdk-${javaVersion}") {
             script{
@@ -114,7 +123,7 @@ def call(Map pipelineParams) {
         }
         steps {
           // Get rid of "-SNAPSHOT" in appVersion for docker tag
-          if ("${appVersion}" =~ "SNAPSHOT") { env.appVersion = sh(script: "echo $appVersion | awk -F\\-SNAPSHOT '{print \$1}'", returnStdout: true).trim() }
+          if ("${appVersion}" =~ "SNAPSHOT") { env.appVersion = sh(script: "echo \$appVersion | awk -F\\-SNAPSHOT '{print \$1}'", returnStdout: true).trim() }
           // Build image with 2 tags: appVersion-$gitCommit; appMajorVersion
           container('dind') {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
@@ -148,7 +157,7 @@ def call(Map pipelineParams) {
             if (fileExists("namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml")) {
               echo "Deployment manifest already exists in k8s repository. Used Docker image tag will be updated automatically in a few minutes."
             } else {
-              container('git-in-docker') {
+              container('git-alpine') {
                 echo 'Deployment manifest not found, adding now...'
                 writeFile([file: "namespace-template.yaml", text: libraryResource("kube/manifests/namespace.yaml")])
                 writeFile([file: "deployment-template.yaml", text: libraryResource("kube/manifests/javaspringboot/deployment.yaml")])

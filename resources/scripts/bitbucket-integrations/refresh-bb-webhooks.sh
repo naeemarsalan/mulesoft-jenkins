@@ -2,7 +2,7 @@
 # This script works with BitBucket API to refresh the webhooks pointing to Jenkins
 # Requires binaries: curl, jq
 #   There is an alpine-based docker image that contains all required binaries:
-#   docker-public.kube.cloudapps.ms3-inc.com/cicd-tools/git-in-docker:dev-latest
+#   docker-public.kube.cloudapps.ms3-inc.com/cicd-tools/git-alpine:dev-latest
 
 generate_json_payload()
 {

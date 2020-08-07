@@ -100,7 +100,7 @@ def call(Map pipelineParams) {
             if (fileExists("namespaces/${projectName}-${appEnv}/${repoName}.yaml")) {
               echo "Deployment manifest already exists in k8s repository. Used Docker image tag will be updated automatically in a few minutes."
             } else {
-              container('git-in-docker') {
+              container('git-alpine') {
                 echo 'Deployment manifest not found, adding now...'
                 writeFile([file: "deployment-template.yaml", text: libraryResource("kube/manifests/angular/deployment.yaml")])
                 writeFile([file: "create-pr-template.json", text: libraryResource("templates/create-pr-bitbucket.json")])
