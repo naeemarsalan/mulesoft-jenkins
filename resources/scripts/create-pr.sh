@@ -2,7 +2,7 @@
 # This script works with BitBucket API to open a Pull Request from feature to target branch.
 # Requires binaries: git, curl, envsubst, awk, sed, cut, jq
 #   There is an alpine-based docker image that contains all required binaries:
-#   docker-public.kube.cloudapps.ms3-inc.com/cicd-tools/git-in-docker:dev-latest
+#   docker-public.kube.cloudapps.ms3-inc.com/cicd-tools/git-alpine:dev-latest
 # Requires additional input from pipeline: 
 #   targetRepoOwner             same as git username
 #   targetRepoName              name of the repo
