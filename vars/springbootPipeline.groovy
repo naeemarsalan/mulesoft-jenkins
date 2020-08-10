@@ -55,6 +55,21 @@ def call(Map pipelineParams) {
               }
             }
             echo "API contract version (major): ${apiMajVersion}"
+          // Check Java version for maven builds
+            switch(javaVersion) {
+              case "1.8":
+                env.javaVersion = "8"
+                break
+              case "11":
+                env.javaVersion = "11"
+                break
+              case "14":
+                env.javaVersion = "14"
+                break
+              default:
+                env.javaVersion = "8"
+                break
+            }
           // If not set in job properties, set the port where application is listening
             if (env.appPort == null) { env.appPort = "8080"}
           // Java artifact will be uploaded to Nexus, target repository depends on is the artifacts version a -SNAPSHOT or not
