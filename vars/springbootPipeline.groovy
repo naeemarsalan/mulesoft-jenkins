@@ -131,7 +131,7 @@ def call(Map pipelineParams) {
           }
         }
       }
-
+/*
       stage('Build Docker Image') {
         when {
           expression { env.BITBUCKET_PULL_REQUEST_ID == null }
@@ -218,7 +218,7 @@ def call(Map pipelineParams) {
             """
           }
         }
-      }
+      }*/
     }
 
     // POST-BUILD NOTIFICATIONS AND INTEGRATIONS
