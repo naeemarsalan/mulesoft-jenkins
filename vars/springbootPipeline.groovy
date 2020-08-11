@@ -84,7 +84,7 @@ def call(Map pipelineParams) {
           }
         }
       }
-/* 
+
        stage('Test') {
         steps {
           container("maven-jdk-${javaVersion}") {
@@ -157,7 +157,7 @@ def call(Map pipelineParams) {
             }
           }
         }
-      } */
+      }
 
       stage('Generate App Manifest') {
         when {
@@ -172,14 +172,10 @@ def call(Map pipelineParams) {
             branch: "${targetBranch}"
           )
           script {
-// TEMPORARY - SHOULD DELETE
-            // Get rid of "-SNAPSHOT" in appVersion for a docker tag
-            if ("${appVersion}" =~ "SNAPSHOT") { env.appVersion = sh(script: "echo \$appVersion | awk -F\\-SNAPSHOT '{print \$1}'", returnStdout: true).trim() }
-// TEMPORARY - SHOULD DELETE
             // check if deployment of the API with the same major contract version already exists
-/*             if (fileExists("namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml")) {
+            if (fileExists("namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml")) {
               echo "Deployment manifest already exists in k8s repository. Used Docker image tag will be updated automatically in a few minutes."
-            } else { */
+            } else {
               container('git-alpine') {
                 echo 'Deployment manifest not found, adding now...'
                 writeFile([file: "namespace-template.yaml", text: libraryResource("kube/manifests/namespace.yaml")])
@@ -191,7 +187,7 @@ def call(Map pipelineParams) {
                   envsubst < namespace-template.yaml > namespaces/${repoName}-${appEnv}/namespace.yaml
                   cat namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml
                 """
-/*                 // parse and populate variables that will be used by deployment script
+                // parse and populate variables that will be used by deployment script
                 env.targetRepoOwner = sh(script: "echo $targetRepoName | awk '\$0=\$2' FS=: RS=\\/", returnStdout: true).trim()
                 env.targetRepoName = sh(script: 'basename $targetRepoName | sed "s/.git//"', returnStdout: true).trim()
                 env.addedFiles = "namespaces/${repoName}-${appEnv}/*"
@@ -202,9 +198,9 @@ def call(Map pipelineParams) {
                 writeFile([file: 'create-pr-bitbucket.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr.sh')])
                 withCredentials([string(credentialsId: "${serviceAccount}-bitbucket-api-pass", variable: "serviceAccountAppPass")]) {
                   sshagent(["${serviceAccount}-bitbucket-ssh-key"]) { sh "sh create-pr-bitbucket.sh" }
-                } */
+                }
               }
-            //}
+            }
             echo "Access to application ${repoName} should be set through Kong Proxy, using the internal cluster URL:\nv${apiMajVersion}.${repoName}-${appEnv}.svc.cluster.local"
           }
         }
@@ -248,7 +244,7 @@ def call(Map pipelineParams) {
               env.commentBody = "Build [#${BUILD_NUMBER}](${BUILD_URL}) with result: ${currentBuild.currentResult}"
               writeFile([file: 'create-pr-comment.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr-comment.sh')])
               sh "bash create-pr-comment.sh"
-            } /* else {
+            } else {
             // Post a notification in Slack channel
               if ( currentBuild.currentResult == "SUCCESS")
                 env.msgColor = "good"
@@ -258,7 +254,7 @@ def call(Map pipelineParams) {
                 color: msgColor,
                 message: "*${currentBuild.currentResult}:* Job ${JOB_NAME} build ${BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
               )
-            } */
+            }
           }
         }
       }
