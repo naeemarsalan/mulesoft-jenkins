@@ -141,15 +141,17 @@ def call(Map pipelineParams) {
             // Get rid of "-SNAPSHOT" in appVersion for a docker tag
             if ("${appVersion}" =~ "SNAPSHOT") { env.appVersion = sh(script: "echo \$appVersion | awk -F\\-SNAPSHOT '{print \$1}'", returnStdout: true).trim() }
           }
-          // Build image with 2 tags: appVersion-$gitCommit; appMajorVersion
+          // Build image with 3 tags: appVersion-$gitCommit; appVersion; appMajorVersion
           container('dind') {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
                 docker build \
                   -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}-\$(echo ${gitCommitID} | cut -c1-7) \
+                  -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion} \
                   -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${appMajVersion} .
                 docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}-\$(echo ${gitCommitID} | cut -c1-7)
+                docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}
                 docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${appMajVersion}
               """
             }
@@ -180,9 +182,10 @@ def call(Map pipelineParams) {
                 writeFile([file: "deployment-template.yaml", text: libraryResource("kube/manifests/javaspringboot/deployment.yaml")])
                 // substitute all variables in deployment manifest and add it to target directory/namespace
                 sh """
-                  mkdir namespaces/${repoName}-${appEnv}/
+                  mkdir -p namespaces/${repoName}-${appEnv}/
                   envsubst < deployment-template.yaml > namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml
                   envsubst < namespace-template.yaml > namespaces/${repoName}-${appEnv}/namespace.yaml
+                  cat namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml
                 """
                 // parse and populate variables that will be used by deployment script
                 env.targetRepoOwner = sh(script: "echo $targetRepoName | awk '\$0=\$2' FS=: RS=\\/", returnStdout: true).trim()

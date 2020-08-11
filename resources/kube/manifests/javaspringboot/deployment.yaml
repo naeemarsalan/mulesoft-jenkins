@@ -6,8 +6,8 @@ metadata:
   namespace: ${repoName}-${appEnv}
   labels:
     appName: ${repoName}
-    apiVersion: ${apiMajVersion}
-    appVersion: ${appMajVersion}
+    apiVersion: "${apiMajVersion}"
+    appVersion: "${appMajVersion}"
     environment: ${appEnv}
   annotations:
     fluxcd.io/automated: "true"
@@ -19,8 +19,8 @@ spec:
   selector:
     matchLabels:
       appName: ${repoName}
-      apiVersion: ${apiMajVersion}
-      appVersion: ${appMajVersion}
+      apiVersion: "${apiMajVersion}"
+      appVersion: "${appMajVersion}"
       environment: ${appEnv}
   strategy:
     type: Recreate
@@ -28,13 +28,13 @@ spec:
     metadata:
       labels:
         appName: ${repoName}
-        apiVersion: ${apiMajVersion}
-        appVersion: ${appMajVersion}
+        apiVersion: "${apiMajVersion}"
+        appVersion: "${appMajVersion}"
         environment: ${appEnv}
     spec:
       containers:
       - name: ${repoName}
-        image: ${dockerRegistryUrl}/${repoName}/${appEnv}:${appMajVersion}
+        image: ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}
         imagePullPolicy: Always
         ports:
         - containerPort: ${appPort}
@@ -65,6 +65,6 @@ spec:
     targetPort: ${appPort}
   selector:
     appName: ${repoName}
-    apiVersion: ${apiMajVersion}
+    apiVersion: "${apiMajVersion}"
     environment: ${appEnv}
   type: ClusterIP
