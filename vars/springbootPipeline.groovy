@@ -84,7 +84,7 @@ def call(Map pipelineParams) {
           }
         }
       }
-
+/* 
        stage('Test') {
         steps {
           container("maven-jdk-${javaVersion}") {
@@ -141,21 +141,23 @@ def call(Map pipelineParams) {
             // Get rid of "-SNAPSHOT" in appVersion for a docker tag
             if ("${appVersion}" =~ "SNAPSHOT") { env.appVersion = sh(script: "echo \$appVersion | awk -F\\-SNAPSHOT '{print \$1}'", returnStdout: true).trim() }
           }
-          // Build image with 2 tags: appVersion-$gitCommit; appMajorVersion
+          // Build image with 3 tags: appVersion-$gitCommit; appVersion; appMajorVersion
           container('dind') {
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
                 docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
                 docker build \
                   -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}-\$(echo ${gitCommitID} | cut -c1-7) \
+                  -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion} \
                   -t ${dockerRegistryUrl}/${repoName}/${appEnv}:${appMajVersion} .
                 docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}-\$(echo ${gitCommitID} | cut -c1-7)
+                docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${appVersion}
                 docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:${appMajVersion}
               """
             }
           }
         }
-      }
+      } */
 
       stage('Generate App Manifest') {
         when {
@@ -170,6 +172,10 @@ def call(Map pipelineParams) {
             branch: "${targetBranch}"
           )
           script {
+// TEMPORARY - SHOULD DELETE
+            // Get rid of "-SNAPSHOT" in appVersion for a docker tag
+            if ("${appVersion}" =~ "SNAPSHOT") { env.appVersion = sh(script: "echo \$appVersion | awk -F\\-SNAPSHOT '{print \$1}'", returnStdout: true).trim() }
+// TEMPORARY - SHOULD DELETE
             // check if deployment of the API with the same major contract version already exists
             if (fileExists("namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml")) {
               echo "Deployment manifest already exists in k8s repository. Used Docker image tag will be updated automatically in a few minutes."
@@ -183,8 +189,9 @@ def call(Map pipelineParams) {
                   mkdir namespaces/${repoName}-${appEnv}/
                   envsubst < deployment-template.yaml > namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml
                   envsubst < namespace-template.yaml > namespaces/${repoName}-${appEnv}/namespace.yaml
+                  cat namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml
                 """
-                // parse and populate variables that will be used by deployment script
+/*                 // parse and populate variables that will be used by deployment script
                 env.targetRepoOwner = sh(script: "echo $targetRepoName | awk '\$0=\$2' FS=: RS=\\/", returnStdout: true).trim()
                 env.targetRepoName = sh(script: 'basename $targetRepoName | sed "s/.git//"', returnStdout: true).trim()
                 env.addedFiles = "namespaces/${repoName}-${appEnv}/*"
@@ -195,7 +202,7 @@ def call(Map pipelineParams) {
                 writeFile([file: 'create-pr-bitbucket.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr.sh')])
                 withCredentials([string(credentialsId: "${serviceAccount}-bitbucket-api-pass", variable: "serviceAccountAppPass")]) {
                   sshagent(["${serviceAccount}-bitbucket-ssh-key"]) { sh "sh create-pr-bitbucket.sh" }
-                }
+                } */
               }
             }
             echo "Access to application ${repoName} should be set through Kong Proxy, using the internal cluster URL:\nv${apiMajVersion}.${repoName}-${appEnv}.svc.cluster.local"
@@ -241,7 +248,7 @@ def call(Map pipelineParams) {
               env.commentBody = "Build [#${BUILD_NUMBER}](${BUILD_URL}) with result: ${currentBuild.currentResult}"
               writeFile([file: 'create-pr-comment.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr-comment.sh')])
               sh "bash create-pr-comment.sh"
-            } else {
+            } /* else {
             // Post a notification in Slack channel
               if ( currentBuild.currentResult == "SUCCESS")
                 env.msgColor = "good"
@@ -251,7 +258,7 @@ def call(Map pipelineParams) {
                 color: msgColor,
                 message: "*${currentBuild.currentResult}:* Job ${JOB_NAME} build ${BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
               )
-            }
+            } */
           }
         }
       }
