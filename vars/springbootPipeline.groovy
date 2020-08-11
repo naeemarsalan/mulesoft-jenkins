@@ -177,9 +177,9 @@ def call(Map pipelineParams) {
             if ("${appVersion}" =~ "SNAPSHOT") { env.appVersion = sh(script: "echo \$appVersion | awk -F\\-SNAPSHOT '{print \$1}'", returnStdout: true).trim() }
 // TEMPORARY - SHOULD DELETE
             // check if deployment of the API with the same major contract version already exists
-            if (fileExists("namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml")) {
+/*             if (fileExists("namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml")) {
               echo "Deployment manifest already exists in k8s repository. Used Docker image tag will be updated automatically in a few minutes."
-            } else {
+            } else { */
               container('git-alpine') {
                 echo 'Deployment manifest not found, adding now...'
                 writeFile([file: "namespace-template.yaml", text: libraryResource("kube/manifests/namespace.yaml")])
@@ -204,7 +204,7 @@ def call(Map pipelineParams) {
                   sshagent(["${serviceAccount}-bitbucket-ssh-key"]) { sh "sh create-pr-bitbucket.sh" }
                 } */
               }
-            }
+            //}
             echo "Access to application ${repoName} should be set through Kong Proxy, using the internal cluster URL:\nv${apiMajVersion}.${repoName}-${appEnv}.svc.cluster.local"
           }
         }
