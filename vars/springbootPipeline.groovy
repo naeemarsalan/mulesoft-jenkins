@@ -186,7 +186,7 @@ def call(Map pipelineParams) {
                 writeFile([file: "deployment-template.yaml", text: libraryResource("kube/manifests/javaspringboot/deployment.yaml")])
                 // substitute all variables in deployment manifest and add it to target directory/namespace
                 sh """
-                  mkdir namespaces/${repoName}-${appEnv}/
+                  mkdir -p namespaces/${repoName}-${appEnv}/
                   envsubst < deployment-template.yaml > namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml
                   envsubst < namespace-template.yaml > namespaces/${repoName}-${appEnv}/namespace.yaml
                   cat namespaces/${repoName}-${appEnv}/v${apiMajVersion}.yaml
