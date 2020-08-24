@@ -44,14 +44,15 @@ def call(Map pipelineParams) {
               }
             }
             echo "Environment ${appEnv}"
-          // If not set in job properties, set API major version from .oas file
+          // If not set in job properties, set API major version from .yml OAS spec file
             if (env.apiMajVersion == null) { 
-              if (fileExists("src/main/resources/api/${repoName}.oas")) {
-                env.apiVersion = sh(script: "grep -R version src/main/resources/api/\${repoName}.oas | head -1 | awk '{print \$2}'", returnStdout: true).trim()
+              if (fileExists("src/main/resources/api/${repoName}.yaml")) {
+                // Will add yaml parser later if needed, for now just "grep"-ing
+                env.apiVersion = sh(script: "grep -R version src/main/resources/api/\${repoName}.yaml | head -1 | awk '{print \$2}'", returnStdout: true).trim()
                 env.apiMajVersion = sh(script: " echo \$apiVersion | awk -F\\. '{print \$1}'", returnStdout: true).trim()
               } else {
                 env.apiMajVersion = "1"
-                echo "File src/main/resources/api/${repoName}.oas not found! Setting"
+                echo "File src/main/resources/api/${repoName}.yaml not found! Will set"
               }
             }
             echo "API contract version (major): ${apiMajVersion}"

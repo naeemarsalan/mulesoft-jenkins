@@ -8,14 +8,14 @@ spec:
   containers:
   - name: maven
     image: maven:3.6.1-alpine
-    securityContext:
-      privileged: true
     tty: true 
     command: ['cat']
   - name: anypoint-cli
     image: docker.kube.cloudapps.ms3-inc.com/anypoint-cli/3:1
-    securityContext:
-      privileged: true
+    tty: true 
+    command: ['cat']
+  - name: newman
+    image: yourdevops/newman-html-reporter:5.1-alpine
     tty: true 
     command: ['cat']
   resources:
