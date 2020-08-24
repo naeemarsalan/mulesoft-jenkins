@@ -58,7 +58,6 @@ def call(Map pipelineParams) {
             // Init other vars
               appStatus = "UNKNOWN"
               stageStatus = ""
-              reportMessage = ""
             // Verify if skipping of CI part and deployment directly from Nexus repository is set to true
               echo "skipCI: ${params.skipCI}"
               if (params.skipCI == true) {
@@ -123,7 +122,7 @@ def call(Map pipelineParams) {
                 reportFiles: 'summary.html',
                 reportName: "Coverage Report"
               ])
-              env.reportMessage = env.reportMessage + "\n${env.stageStatus} <${env.JOB_URL}Coverage_20Report|${STAGE_NAME}>"
+              env.reportMessage = "${env.stageStatus} <${env.JOB_URL}Coverage_20Report|${STAGE_NAME}>"
             }
           }
         }
