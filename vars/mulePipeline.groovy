@@ -208,7 +208,7 @@ def call(Map pipelineParams) {
                     script {
                       sleep(time: 1, unit: 'MINUTES')
                       // Get app status from Anypoint
-                      env.appStatus = sh (returnStdout: true, script: "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application describe ${artifactName} -f Status | head -c -1 | awk '{print \$2}'")
+                      env.appStatus = sh (returnStdout: true, script: "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application describe ${artifactName} -f Status | awk '{print \$2}' | head -c -1")
                       echo "Application status: ${env.appStatus}"
                       if (env.appStatus =~ "STARTED") {
                         sh "exit 0"
