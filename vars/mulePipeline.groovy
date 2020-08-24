@@ -245,7 +245,7 @@ def call(Map pipelineParams) {
       stage('Integration Tests') {
         when {
           expression { env.appStatus =~ "STARTED" }
-          expression { fileExists("src/test/resources/postman/${repositoryName}.postman_collection.json") }
+          expression { fileExists("src/test/resources/postman/${repoName}.postman_collection.json") }
           expression { params.skipCI == false }
         }
         steps {
