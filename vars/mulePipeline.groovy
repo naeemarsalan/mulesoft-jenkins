@@ -335,7 +335,7 @@ def call(Map pipelineParams) {
             sh "bash create-bb-webhook.sh"
             if (env.BITBUCKET_PULL_REQUEST_ID != null) {
               // This is a test run on a Pull Request, so should leave a comment containing tests report
-              env.commentBody = "Build [#${BUILD_NUMBER}](${BUILD_URL}) with result: ${currentBuild.currentResult}  \\n[Tests coverage report](${JOB_URL}Coverage_20Report/)  \\nPlease check [linter script output](${BUILD_URL}execution/node/40/log/)"
+              env.commentBody = "Build [#${BUILD_NUMBER}](${BUILD_URL}) with result: ${currentBuild.currentResult}  \\n[Tests coverage report](${JOB_URL}Coverage_20Report/)  \\nPlease check [linter script output](${BUILD_URL}execution/node/42/log/)"
               writeFile([file: 'create-pr-comment.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr-comment.sh')])
               sh "bash create-pr-comment.sh"
             } else {
