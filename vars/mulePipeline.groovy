@@ -244,8 +244,8 @@ def call(Map pipelineParams) {
       stage('Integration Tests') {
         when {
           expression { env.appStatus =~ "STARTED" }
-          expression { fileExists("src/test/resources/postman/${repoName}.postman_collection.json") }
-          expression { params.skipCI == false }
+          expression { fileExists("src/test/resources/integration-tests/${repoName}.postman_collection.json") }
+          expression { fileExists("src/test/resources/integration-tests/${maven_env}.postman_environment.json") }
         }
         steps {
           container('newman') {
