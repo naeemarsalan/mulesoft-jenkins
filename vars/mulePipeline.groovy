@@ -253,8 +253,8 @@ def call(Map pipelineParams) {
               echo "Running Integration tests."
               catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                 sh """
-                  newman run src/test/resources/postman/${repoName}.postman_collection.json \
-                    -e src/test/resources/postman/${maven_env}.postman_environment.json \
+                  newman run src/test/resources/integration-tests/${repoName}.postman_collection.json \
+                    -e src/test/resources/integration-tests/${maven_env}.postman_environment.json \
                     --reporters cli,html \
                     --reporter-html-export target/site/newman/integration-tests-report.html
                 """
