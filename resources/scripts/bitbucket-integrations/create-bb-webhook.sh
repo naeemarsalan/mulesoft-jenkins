@@ -17,11 +17,11 @@ generate_json_payload()
 EOF
 }
 
-currentHooks=$(curl -u ${serviceAccount}:${serviceAccountAppPass} https://api.bitbucket.org/2.0/repositories/${workSpaceBB}/${repoName}/hooks |grep "${JENKINS_URL}bitbucket-hook/" | head -n 1)
+currentHooks=$(curl -s -u ${serviceAccount}:${serviceAccountAppPass} https://api.bitbucket.org/2.0/repositories/${workSpaceBB}/${repoName}/hooks |grep "${JENKINS_URL}bitbucket-hook/" | head -n 1)
 
 if [[ "$currentHooks" =~ .*"${JENKINS_URL}bitbucket-hook/".* ]]; then
     echo "Webhook is already present"
 else 
     echo "Webhook not found, adding.."
-    curl -X POST -u ${serviceAccount}:${serviceAccountAppPass} https://api.bitbucket.org/2.0/repositories/${workSpaceBB}/${repoName}/hooks -H 'Content-Type: application/json' --data "$(generate_json_payload)"
+    curl -s -X POST -u ${serviceAccount}:${serviceAccountAppPass} https://api.bitbucket.org/2.0/repositories/${workSpaceBB}/${repoName}/hooks -H 'Content-Type: application/json' --data "$(generate_json_payload)"
 fi
