@@ -194,7 +194,7 @@ def call(Map pipelineParams) {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                   dir('target') {
                     // Get app description from Anypoint
-                    env.appStatus = sh (returnStdout: true, script: "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application describe ${artifactName}")
+                    env.appStatus = sh (returnStdout: true, script: "set +e; anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application describe ${artifactName}; set -e")
                     echo "Check if app exists:\n${env.appStatus}"
                     if (env.appStatus =~ "not found")
                       // Deploy new app if not found
