@@ -34,11 +34,11 @@ def call(Map pipelineParams) {
             }
             // Set docker registry depending on imageIsPublic
             if (env.imageIsPublic == "true") {
-              env.dockerRegistryUrl = dockerPublicRegistryUrl
+              env.dockerUrl = dockerPublicRegistryUrl
             } else {
-              env.dockerRegistryUrl = dockerPrivateRegistryUrl
+              env.dockerUrl = dockerPrivateRegistryUrl
             }
-            echo "Public image: ${env.imageIsPublic}\nImage env: ${env.appEnv}\nUploaded to: ${env.dockerRegistryUrl}"
+            echo "Public image: ${env.imageIsPublic}\nImage env: ${env.appEnv}\nUploaded to: ${env.dockerUrl}"
           }
         }
       }
@@ -52,12 +52,12 @@ def call(Map pipelineParams) {
             echo "Building application for ${appEnv} environment..."
             withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
               sh """
-                docker login ${dockerRegistryUrl} -u ${USERNAME} -p ${PASSWORD}
+                docker login ${dockerUrl} -u ${USERNAME} -p ${PASSWORD}
                 docker build \
-                  -t ${dockerRegistryUrl}/${repoName}/${appEnv}:\$(echo ${gitCommitID} | cut -c1-7) \
-                  -t ${dockerRegistryUrl}/${repoName}/${appEnv}:latest .
-                docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:\$(echo ${gitCommitID} | cut -c1-7)
-                docker push ${dockerRegistryUrl}/${repoName}/${appEnv}:latest
+                  -t ${dockerUrl}/${repoName}/${appEnv}:\$(echo ${gitCommitID} | cut -c1-7) \
+                  -t ${dockerUrl}/${repoName}/${appEnv}:latest .
+                docker push ${dockerUrl}/${repoName}/${appEnv}:\$(echo ${gitCommitID} | cut -c1-7)
+                docker push ${dockerUrl}/${repoName}/${appEnv}:latest
               """
             }
           }
