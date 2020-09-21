@@ -10,6 +10,16 @@ def call(Map pipelineParams) {
       stage('Prepare Env Vars') {
         steps {
           script {
+            // Bitbucket Push and Pull Request Plugin provides this variable containing the branch that triggered this build
+            // In very rare circumstances it happens to be null when job is triggered manually, in that case assign to it value of default $GIT_BRANCH variable
+              if (env.BITBUCKET_SOURCE_BRANCH == null) { 
+                env.BITBUCKET_SOURCE_BRANCH = sh(script: "echo $GIT_BRANCH | grep -oP '(?<=origin/).*'", returnStdout: true).trim()
+              }
+            // Checkout provided branch 
+              echo "Now checking out source branch: ${BITBUCKET_SOURCE_BRANCH}"
+              git (url: "${GIT_URL}",
+              credentialsId: "${serviceAccount}-bitbucket-ssh-key",
+              branch: "${BITBUCKET_SOURCE_BRANCH}")
             // Notify BitBucket that a build was started
             env.repoName = sh(script: 'basename $GIT_URL | sed "s/.git//"', returnStdout: true).trim()
             env.gitCommitID = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
@@ -45,7 +55,7 @@ def call(Map pipelineParams) {
 
       stage('Build and Push Docker Image') {
         when {
-          expression { GIT_BRANCH ==~ /(.*master|.*develop|.*uat)/ }
+          expression { env.BITBUCKET_PULL_REQUEST_ID == null }
         }
         steps {
           container('dind') {
