@@ -15,6 +15,7 @@ def call(Map pipelineParams) {
       stage('Prepare Env Vars') {
         steps {
           script {
+            env.LAST_EXECUTED_STAGE = STAGE_NAME
             // Bitbucket Push and Pull Request Plugin provides this variable containing the branch that triggered this build
             // In very rare circumstances it happens to be null when job is triggered manually, in that case assign to it value of default $GIT_BRANCH variable
               if (env.BITBUCKET_SOURCE_BRANCH == null) { 
@@ -54,15 +55,12 @@ def call(Map pipelineParams) {
                     break
                 }
               }
-              echo "Environment ${maven_env}"
-            // Init other vars
-              appStatus = "UNKNOWN"
-              stageStatus = ""
+            // Start collecting the build report
+            env.SLACK_REPORT_MSG = "\n${currentBuild.getBuildCauses()[0].shortDescription}"
             // Verify if skipping of CI part and deployment directly from Nexus repository is set to true
               echo "skipCI: ${params.skipCI}"
               if (params.skipCI == true) {
-                echo "Skipping CI part, going to deploy a previously built artifact from Nexus..."
-                env.reportMessage = "\nSKIPPED Unit Tests\nSKIPPED Build"
+                echo "Skipping CI part, going to redeploy a previously built artifact from Nexus..."
                 writeFile([file: 'download-from-nexus.sh', text: libraryResource('scripts/download-from-nexus.sh')])
                 sh "bash download-from-nexus.sh"
               }
@@ -77,9 +75,24 @@ def call(Map pipelineParams) {
         }
         steps {
           script {
+            env.LAST_EXECUTED_STAGE = STAGE_NAME
             // Run linter script
             writeFile([file: 'ms3-mule-linter.sh', text: libraryResource('scripts/ms3-mule-linter.sh')])
-            sh "bash ms3-mule-linter.sh"
+            sh "bash ms3-mule-linter.sh | tee linter-output.txt"
+          }
+        }
+        post {
+          cleanup {
+            script {
+              publishHTML (target: [
+                allowMissing: true,
+                alwaysLinkToLastBuild: false,
+                keepAll: true,
+                reportDir: '.',
+                reportFiles: 'linter-output.txt',
+                reportName: "Linter Output"
+              ])
+            }
           }
         }
       }
@@ -92,6 +105,7 @@ def call(Map pipelineParams) {
         steps {
           container('maven') {
             script {
+              env.LAST_EXECUTED_STAGE = STAGE_NAME
               echo "Running tests against branch: ${BITBUCKET_SOURCE_BRANCH}, env: ${maven_env}"
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 withCredentials([string(credentialsId: "${maven_env}-encryptor-pwd", variable: 'encryptorPasswd')]) {
@@ -102,16 +116,6 @@ def call(Map pipelineParams) {
           }
         }
         post {
-          success {
-            script {
-              env.stageStatus = "SUCCESS"
-            }
-          }
-          unsuccessful {
-            script {
-              env.stageStatus = "FAILED "
-            }
-          }
           cleanup {
             script {
               publishHTML (target: [
@@ -122,7 +126,6 @@ def call(Map pipelineParams) {
                 reportFiles: 'summary.html',
                 reportName: "Coverage Report"
               ])
-              env.reportMessage = "${env.stageStatus} <${env.JOB_URL}Coverage_20Report|${STAGE_NAME}>"
             }
           }
         }
@@ -136,27 +139,11 @@ def call(Map pipelineParams) {
         steps {
           container('maven') {
             script {
+              env.LAST_EXECUTED_STAGE = STAGE_NAME
               echo "Building..."
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 sh "mvn -s '$MAVEN_SETTINGS_FILE' clean package -DskipTests"
               }
-            }
-          }
-        }
-        post {
-          success {
-            script {
-              env.stageStatus = "SUCCESS"
-            }
-          }
-          unsuccessful {
-            script {
-              env.stageStatus = "FAILED "
-            }
-          }
-          cleanup {
-            script {
-              env.reportMessage = env.reportMessage + "\n${env.stageStatus} ${STAGE_NAME}"
             }
           }
         }
@@ -170,6 +157,7 @@ def call(Map pipelineParams) {
         steps {
           container('maven') {
             script {
+              env.LAST_EXECUTED_STAGE = STAGE_NAME
               echo "Uploading..."
               configFileProvider([configFile(fileId: 'maven_settings', variable: 'MAVEN_SETTINGS_FILE')]) {
                 echo "Artifact is being uploaded to: ${nexusUrl}"
@@ -190,12 +178,12 @@ def call(Map pipelineParams) {
         steps {
           container('anypoint-cli') {
             script {
+              env.LAST_EXECUTED_STAGE = STAGE_NAME
               withCredentials([usernamePassword(credentialsId: 'anypointplatform', passwordVariable: 'anypoint_pass', usernameVariable: 'anypoint_user')]) {
-                catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                   dir('target') {
                     // Get app description from Anypoint
                     env.appStatus = sh (returnStdout: true, script: "set +e; anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application describe ${artifactName}; set -e")
-                    echo "Check if app exists:\n${env.appStatus}"
+                    echo "Application description from Anypoint:\n${env.appStatus}"
                     if (env.appStatus =~ "not found")
                       // Deploy new app if not found
                       sh "anypoint-cli --username=${anypoint_user} --password=${anypoint_pass} --environment=${anypoint_env} runtime-mgr standalone-application deploy ${anypoint_server} ${artifactName} ${artifactName}-${version}-${packaging}.jar"
@@ -217,25 +205,7 @@ def call(Map pipelineParams) {
                       }
                     }
                   }
-                }
               }
-            }
-          }
-        }
-        post {
-          success {
-            script {
-              env.stageStatus = "SUCCESS"
-            }
-          }
-          unsuccessful {
-            script {
-              env.stageStatus = "FAILED "
-            }
-          }
-          cleanup {
-            script {
-              env.reportMessage = env.reportMessage + "\n${env.stageStatus} ${STAGE_NAME}.\n        Application ${artifactName} status: ${env.appStatus}"
             }
           }
         }
@@ -243,13 +213,13 @@ def call(Map pipelineParams) {
 
       stage('Integration Tests') {
         when {
-          expression { env.appStatus =~ "STARTED" }
           expression { fileExists("src/test/resources/integration-tests/${repoName}.postman_collection.json") }
           expression { fileExists("src/test/resources/integration-tests/${maven_env}.postman_environment.json") }
         }
         steps {
           container('newman') {
             script {
+              env.LAST_EXECUTED_STAGE = STAGE_NAME
               echo "Running Integration tests."
               catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                 sh """
@@ -263,16 +233,6 @@ def call(Map pipelineParams) {
           }
         }
         post {
-          success {
-            script {
-              env.stageStatus = "SUCCESS"
-            }
-          }
-          unsuccessful {
-            script {
-              env.stageStatus = "FAILED "
-            }
-          }
           cleanup {
             script {
               publishHTML (target: [
@@ -283,7 +243,6 @@ def call(Map pipelineParams) {
                 reportFiles: 'integration-tests-report.html',
                 reportName: "Integration Tests Report"
               ])
-              env.reportMessage = env.reportMessage + "\n${env.stageStatus} <${env.JOB_URL}Integration_20Tests_20Report|${STAGE_NAME}>"
             }
           }
         }
@@ -292,9 +251,11 @@ def call(Map pipelineParams) {
       stage('Add Release Tag') {
         when {
           expression { BITBUCKET_SOURCE_BRANCH == "master" }
-          expression { currentBuild.currentResult == "SUCCESS" }
         }
         steps {
+          script {
+            env.LAST_EXECUTED_STAGE = STAGE_NAME
+          }
           sshagent(["${serviceAccount}-bitbucket-ssh-key"]) {
             sh """
               mkdir -p ~/.ssh && ssh-keyscan -t rsa bitbucket.org >> ~/.ssh/known_hosts
@@ -325,6 +286,8 @@ def call(Map pipelineParams) {
             default:
               env.msgColor = "danger"
               bitbucketStatusNotify(buildState: 'FAILED', repoSlug: "${repoName}", commitId: "${gitCommitID}")
+              // If pipeline failed, provide the name of failing step in Slack report
+              env.SLACK_REPORT_MSG = env.SLACK_REPORT_MSG + "\nFailed on step: " + env.LAST_EXECUTED_STAGE
               break
           }
           //Check if the webhook exists in BitBucket, then add it if it doesn't exist
@@ -333,19 +296,20 @@ def call(Map pipelineParams) {
             writeFile([file: 'create-bb-webhook.sh', text: libraryResource('scripts/bitbucket-integrations/create-bb-webhook.sh')])
             sh "bash create-bb-webhook.sh"
             if (env.BITBUCKET_PULL_REQUEST_ID != null) {
-              // This is a test run on a Pull Request, so should leave a comment containing tests report
-              env.commentBody = "Build [#${BUILD_NUMBER}](${BUILD_URL}) with result: ${currentBuild.currentResult}  \\n[Tests coverage report](${JOB_URL}Coverage_20Report/)  \\nPlease check [linter script output](${BUILD_URL}execution/node/42/log/)"
+              // Provide a link to the Pull Request in Slack
+              env.SLACK_REPORT_MSG = env.SLACK_REPORT_MSG + "\nTests run against <${BITBUCKET_PULL_REQUEST_LINK}|Pull Request>, branch: `${BITBUCKET_SOURCE_BRANCH}`"
+              // Leave a feedback in BitBucket on the Pull Request
+              env.commentBody = "[BUILD #${BUILD_NUMBER}](${BUILD_URL}): ${currentBuild.currentResult}  \\n[Tests coverage report](${JOB_URL}Coverage_20Report/)  \\n[Linter script output](${env.JOB_URL}Linter_20Output)"
               writeFile([file: 'create-pr-comment.sh', text: libraryResource('scripts/bitbucket-integrations/create-pr-comment.sh')])
               sh "bash create-pr-comment.sh"
-            } else {
-              // This is an actual deployment, so should post a notification in Slack channel
-              env.reportMessage = "*${currentBuild.currentResult}:* Job ${JOB_NAME} build #${BUILD_NUMBER}:```${env.reportMessage}```\n<${env.BUILD_URL}console|Console output>"
-              slackSend(
-                color: env.msgColor,
-                message: env.reportMessage
-              )
             }
           }
+          // Post a notification in Slack channel
+          env.SLACK_REPORT_MSG = "*${currentBuild.currentResult}:* <${env.BUILD_URL}display/redirect|${env.JOB_NAME}> BUILD #${BUILD_NUMBER}:" + env.SLACK_REPORT_MSG + "\nTime total: " + sh(script: "echo '${currentBuild.durationString}' | sed 's/and counting//'", returnStdout: true).trim()
+          slackSend(
+            color: env.msgColor,
+            message: env.SLACK_REPORT_MSG
+          )
         }
       }
     }
